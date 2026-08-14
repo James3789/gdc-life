@@ -5,7 +5,8 @@ import AppShell from '../../components/AppShell'
 import KakaoMap, { type Pin } from '../../components/map/KakaoMap'
 import { Alert, Button } from '../../components/ui'
 import { useAuth } from '../../lib/auth'
-import { formatDateKo, formatTimeKo } from '../../lib/dates'
+import { formatDateKo, formatTimeKo, hasDeparted } from '../../lib/dates'
+import { completeOffer } from '../../lib/ratings'
 import { DIRECTIONS } from '../../lib/direction'
 import { formatDistance, formatDuration, type LatLng } from '../../lib/geo'
 import { canShareLocation, useLiveLocation } from '../../lib/liveLocation'
@@ -29,6 +30,8 @@ export default function TripPage() {
   const [allowed, setAllowed] = useState<boolean | null>(null)
   const [loading, setLoading] = useState(true)
   const [loadError, setLoadError] = useState<string | null>(null)
+  const [completing, setCompleting] = useState(false)
+  const [completeError, setCompleteError] = useState<string | null>(null)
 
   const live = useLiveLocation(offerId, me ? { id: me.id, name: me.name } : null)
 
@@ -67,6 +70,22 @@ export default function TripPage() {
   useEffect(() => {
     load()
   }, [load])
+
+  async function handleComplete() {
+    if (!offerId) return
+    if (!confirm('운행완료로 처리할까요? 별점 1점이 적립됩니다.')) return
+    setCompleting(true)
+    setCompleteError(null)
+    try {
+      await completeOffer(offerId)
+      live.stop() // 완료 후에는 위치 공유를 중단한다
+      await load()
+    } catch (err) {
+      setCompleteError(err instanceof Error ? err.message : '완료 처리하지 못했습니다.')
+    } finally {
+      setCompleting(false)
+    }
+  }
 
   if (loading) {
     return (
@@ -186,6 +205,26 @@ export default function TripPage() {
             위치는 저장되지 않고 상대에게 직접 전달됩니다. 화면을 벗어나면 즉시 중단됩니다.
           </p>
         </section>
+
+        {/* 운행완료 (봉사자, 출발 시각 이후) */}
+        {isDriver && hasDeparted(offer.rideDate, offer.departTime) && offer.status !== 'done' && (
+          <section className="rounded-2xl border border-brand-200 bg-brand-50 p-4">
+            <p className="text-[14px] font-bold text-brand-800">운행을 마치셨나요?</p>
+            <p className="mt-1 text-[12px] leading-relaxed text-brand-700/80">
+              완료 처리하면 별점 1점이 적립되고 위치 공유가 중단됩니다.
+            </p>
+            {completeError && (
+              <p className="mt-2 text-[12px] text-rose-600">{completeError}</p>
+            )}
+            <Button full loading={completing} onClick={handleComplete} className="mt-3">
+              운행완료
+            </Button>
+          </section>
+        )}
+
+        {offer.status === 'done' && (
+          <Alert tone="success">운행완료 처리된 카풀입니다. 별점이 적립되었습니다.</Alert>
+        )}
 
         {/* 상대 연락처 */}
         <section>

@@ -214,11 +214,69 @@ console.log('\n▶ 샘플 신청')
   }
 }
 
+// ── 완료된 운행 (별점 적립) ───────────────────────────────────
+// driver1 프로필에 별점이 보이도록 지난 운행을 하나 만들어 완료 처리한다.
+console.log('\n▶ 완료된 운행 (별점)')
+{
+  const { client: driverClient, session: driverSession } = await signIn('driver1')
+  const { client: riderClient } = await signIn('rider2')
+
+  const yesterday = (() => {
+    const d = new Date()
+    d.setDate(d.getDate() - 1)
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+  })()
+
+  const { data: already } = await driverClient
+    .from('carpool_offers')
+    .select('id')
+    .eq('driver_id', driverSession.user.id)
+    .eq('ride_date', yesterday)
+    .limit(1)
+
+  if (already?.length) {
+    console.log('  · 이미 있음, 건너뜀')
+  } else {
+    const route = await routeBetween(driverSession, SAMSAN, GDC)
+    const { data: offers, error } = await driverClient.rpc('create_carpool_offers', {
+      p_direction: 'commute-in',
+      p_dates: [yesterday],
+      p_depart_time: '07:30',
+      p_origin: SAMSAN,
+      p_dest: GDC,
+      p_route: route.path,
+      p_route_distance_m: route.distanceM ?? undefined,
+      p_route_duration_s: route.durationS ?? undefined,
+      p_seats_total: 3,
+    })
+
+    if (error) {
+      console.log(`  ✗ 등록 실패: ${error.message}`)
+    } else {
+      const { data: req } = await riderClient.rpc('request_carpool', {
+        p_offer_id: offers[0].id,
+        p_lat: 35.5223,
+        p_lng: 129.3055,
+        p_addr: '울산 남구 달동',
+        p_desired_time: '07:35',
+        p_tolerance: 30,
+      })
+      await driverClient.rpc('accept_carpool_request', { p_request_id: req.id })
+      const { error: done } = await driverClient.rpc('complete_carpool_offer', {
+        p_offer_id: offers[0].id,
+      })
+      if (done) console.log(`  ✗ 완료 처리 실패: ${done.message}`)
+      else console.log(`  ✓ ${yesterday} 운행완료 → driver1 별점 +1`)
+    }
+  }
+}
+
 console.log(`
 ──────────────────────────────
   비밀번호는 모두  ${PASSWORD}
   샘플 카풀 기간   ${dates[0]} ~ ${dates[dates.length - 1]}
 
   driver1 로 로그인 → 신청함에 대기 건 1개
+                    → 내 정보에 별점 1점
 ──────────────────────────────
 `)

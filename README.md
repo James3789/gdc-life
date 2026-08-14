@@ -132,6 +132,7 @@ Flask + VPS 조합은 월 $5~10이 들고 무료 티어는 콜드스타트가 �
 | `npm run test:search` | 매칭 검색·신청 검증 |
 | `npm run test:matching` | 좌석 동시성·연락처 공개 범위 검증 |
 | `npm run test:location` | 실시간 위치 채널 접근 통제 검증 |
+| `npm run test:ratings` | 운행완료·별점 적립 검증 |
 | `npm run test:directions` | 길찾기 Edge Function 검증 (`fn:serve` 실행 중이어야 함) |
 | `npm run fn:deploy` | 카카오 길찾기 Edge Function 배포 |
 | `npm run geocode` | 주소를 좌표로 변환 |
@@ -256,6 +257,26 @@ login_id "hong12"  →  Auth 이메일  hong12@gdc-life.local
 > `realtime.messages` 의 소유자는 `supabase_realtime_admin` 이라 마이그레이션(postgres 역할)에서
 > `ENABLE ROW LEVEL SECURITY` 는 실행할 수 없다. 이미 켜져 있으므로 정책만 만들면 된다.
 
+### 별점 — 운행완료 자동 처리
+
+별점은 카풀 1건당 1점이며, 적립 경로는 두 가지 서버 함수뿐이다.
+클라이언트에는 `driver_ratings` INSERT/UPDATE 권한이 없어 점수를 조작할 수 없다.
+
+1. 봉사자가 **[운행완료]** 를 누름 — 출발 시각 이후 + 탑승자가 있어야 한다
+2. `auto_complete_due_offers()` — 출발 후 4시간이 지난 건을 일괄 처리 (service_role 전용)
+
+2번을 자동화하려면 **운영 프로젝트에서 한 번** 아래를 실행한다 (대시보드 SQL 에디터):
+
+```sql
+create extension if not exists pg_cron;
+select cron.schedule(
+  'gdc-life-auto-complete', '0 * * * *',
+  $$ select public.auto_complete_due_offers(); $$
+);
+```
+
+> 로컬 스택에는 일부러 넣지 않았다. 백그라운드 작업이 테스트 중 카풀을 완료시켜 결과가 흔들린다.
+
 ### 좌석 동시성
 
 여러 탑승자를 동시에 허락해도 좌석이 초과되지 않아야 한다.
@@ -302,7 +323,7 @@ anon 키도 유효한 JWT 이고 프론트 번들에 그대로 실려 나가므�
 - [x] **Phase 3** — 탑승자 검색 · 매칭 추천 · 신청
 - [x] **Phase 4** — 신청 허락/거절 · 좌석 차감 · 연락처 개방 · 전화 버튼
 - [x] **Phase 5** — 실시간 위치 공유 · 전화
-- [ ] **Phase 6** — 별점 (월간/연간/누적)
+- [x] **Phase 6** — 운행완료 처리 · 별점 (월간/연간/누적)
 - [ ] **Phase 7** — 알림 · 반응형 QA · 마감
 
 ---

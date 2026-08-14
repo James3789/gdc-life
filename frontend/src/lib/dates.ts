@@ -64,6 +64,13 @@ export function expandRecurringDates(
   return dates
 }
 
+/** 출발 시각이 지났는지 (브라우저 로컬 시간 기준 — 최종 판정은 서버가 한다) */
+export function hasDeparted(isoDate: string, hhmm: string): boolean {
+  const [y, m, d] = isoDate.split('-').map(Number)
+  const [hh, mi] = hhmm.split(':').map(Number)
+  return new Date(y, m - 1, d, hh, mi) <= new Date()
+}
+
 /** 달력 그리드 — 해당 월을 감싸는 6주(일요일 시작) */
 export function monthGrid(year: number, month: number): string[] {
   const first = new Date(year, month, 1)

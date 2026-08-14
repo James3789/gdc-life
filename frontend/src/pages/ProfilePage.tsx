@@ -1,18 +1,31 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 
 import AppShell from '../components/AppShell'
-import ComingSoon from '../components/ComingSoon'
-import { Button } from '../components/ui'
+import { Alert, Button } from '../components/ui'
 import { useAuth } from '../lib/auth'
+import { formatDateKo } from '../lib/dates'
+import { DIRECTIONS } from '../lib/direction'
+import { getMyRatingSummary, listMyRatings, type RatingEntry, type RatingSummary } from '../lib/ratings'
 
 function Row({ label, value }: { label: string; value: string }) {
   return (
     <div className="flex items-start justify-between gap-4 px-4 py-3.5">
       <dt className="shrink-0 text-[13px] text-slate-500">{label}</dt>
-      <dd className="text-right text-[14px] font-medium break-all text-slate-900">
-        {value || '—'}
-      </dd>
+      <dd className="text-right text-[14px] font-medium break-all text-slate-900">{value || '—'}</dd>
+    </div>
+  )
+}
+
+function Stat({ label, value, highlight = false }: { label: string; value: number; highlight?: boolean }) {
+  return (
+    <div
+      className={`rounded-xl px-3 py-3.5 text-center ${
+        highlight ? 'bg-brand-600 text-white' : 'bg-white text-slate-900'
+      }`}
+    >
+      <p className={`text-[11px] ${highlight ? 'text-brand-100' : 'text-slate-500'}`}>{label}</p>
+      <p className="mt-1 text-[22px] leading-none font-bold tabular-nums">{value}</p>
     </div>
   )
 }
@@ -20,7 +33,25 @@ function Row({ label, value }: { label: string; value: string }) {
 export default function ProfilePage() {
   const { me, signOut } = useAuth()
   const navigate = useNavigate()
+
   const [busy, setBusy] = useState(false)
+  const [summary, setSummary] = useState<RatingSummary | null>(null)
+  const [history, setHistory] = useState<RatingEntry[]>([])
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    let alive = true
+    Promise.all([getMyRatingSummary(), listMyRatings()])
+      .then(([s, h]) => {
+        if (!alive) return
+        setSummary(s)
+        setHistory(h)
+      })
+      .catch((err: Error) => alive && setError(err.message))
+    return () => {
+      alive = false
+    }
+  }, [])
 
   async function handleSignOut() {
     setBusy(true)
@@ -52,8 +83,54 @@ export default function ProfilePage() {
         전화번호는 카풀 신청이 <strong>허락된 상대</strong>에게만 공개됩니다.
       </p>
 
-      <h3 className="mt-6 mb-2 px-1 text-sm font-semibold text-slate-500">별점</h3>
-      <ComingSoon phase="Phase 6" items={['월간 · 연간 · 누적 점수', '최근 운행 이력']} />
+      {/* 별점 */}
+      <h3 className="mt-6 mb-2 px-1 text-sm font-semibold text-slate-500">봉사 별점</h3>
+      {error && <Alert tone="error">{error}</Alert>}
+
+      <div className="grid grid-cols-3 gap-2 rounded-2xl border border-slate-200 bg-slate-50 p-2">
+        <Stat label="이번 달" value={summary?.monthly ?? 0} />
+        <Stat label="올해" value={summary?.yearly ?? 0} />
+        <Stat label="누적" value={summary?.total ?? 0} highlight />
+      </div>
+      <p className="mt-2 px-1 text-[12px] text-slate-500">
+        카풀 1회 운행완료 시 1점이 적립됩니다.
+      </p>
+
+      {/* 이력 */}
+      <h3 className="mt-6 mb-2 px-1 text-sm font-semibold text-slate-500">최근 이력</h3>
+      {history.length === 0 ? (
+        <div className="rounded-2xl border border-dashed border-slate-300 bg-white px-4 py-8 text-center">
+          <p className="text-[13px] text-slate-500">
+            아직 완료한 운행이 없습니다.
+            <br />
+            카풀을 등록하고 탑승자를 태워 보세요.
+          </p>
+        </div>
+      ) : (
+        <ul className="space-y-2">
+          {history.map((entry) => (
+            <li
+              key={entry.id}
+              className="flex items-center gap-3 rounded-xl border border-slate-200 bg-white px-4 py-3"
+            >
+              <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-amber-50 text-[15px]">
+                ⭐
+              </span>
+              <div className="min-w-0 flex-1">
+                <p className="text-[14px] font-semibold text-slate-900">
+                  {formatDateKo(entry.rideDate)} · {DIRECTIONS[entry.direction].label}
+                </p>
+                <p className="truncate text-[12px] text-slate-500">
+                  {entry.originAddr} → {entry.destAddr}
+                </p>
+              </div>
+              <span className="shrink-0 text-[14px] font-bold text-brand-700">
+                +{entry.points}
+              </span>
+            </li>
+          ))}
+        </ul>
+      )}
 
       <Button variant="secondary" full loading={busy} onClick={handleSignOut} className="mt-6">
         로그아웃

@@ -375,6 +375,7 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      auto_complete_due_offers: { Args: never; Returns: number }
       can_share_location: { Args: { p_offer_id: string }; Returns: boolean }
       can_use_trip_channel: { Args: { p_topic: string }; Returns: boolean }
       cancel_carpool_offers: {
@@ -399,6 +400,39 @@ export type Database = {
         SetofOptions: {
           from: "*"
           to: "carpool_requests"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      complete_carpool_offer: {
+        Args: { p_offer_id: string }
+        Returns: {
+          created_at: string
+          depart_time: string
+          dest_addr: string
+          dest_lat: number
+          dest_lng: number
+          dest_point: unknown
+          direction: Database["public"]["Enums"]["carpool_direction"]
+          driver_id: string
+          id: string
+          origin_addr: string
+          origin_lat: number
+          origin_lng: number
+          origin_point: unknown
+          recurring_group_id: string | null
+          ride_date: string
+          route: unknown
+          route_distance_m: number | null
+          route_duration_s: number | null
+          seats_available: number
+          seats_total: number
+          status: Database["public"]["Enums"]["offer_status"]
+          waypoints: Json
+        }
+        SetofOptions: {
+          from: "*"
+          to: "carpool_offers"
           isOneToOne: true
           isSetofReturn: false
         }
@@ -448,6 +482,15 @@ export type Database = {
         }
       }
       is_login_id_available: { Args: { p_login_id: string }; Returns: boolean }
+      my_rating_summary: {
+        Args: never
+        Returns: {
+          monthly: number
+          rides: number
+          total: number
+          yearly: number
+        }[]
+      }
       offer_route_path: { Args: { p_offer_id: string }; Returns: Json }
       reject_carpool_request: {
         Args: { p_request_id: string }

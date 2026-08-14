@@ -3,10 +3,18 @@ import { Link } from 'react-router-dom'
 
 import AppShell from '../../components/AppShell'
 import { Alert, Button } from '../../components/ui'
-import { WEEKDAY_LABELS, formatDateKo, formatTimeKo, monthGrid, todayISO } from '../../lib/dates'
+import {
+  WEEKDAY_LABELS,
+  formatDateKo,
+  formatTimeKo,
+  hasDeparted,
+  monthGrid,
+  todayISO,
+} from '../../lib/dates'
 import { DIRECTIONS } from '../../lib/direction'
 import { formatDistance } from '../../lib/geo'
 import { OFFER_STATUS_LABEL, cancelOffer, listMyOffers, type Offer } from '../../lib/offers'
+import { completeOffer } from '../../lib/ratings'
 
 const STATUS_STYLE: Record<Offer['status'], string> = {
   open: 'bg-brand-50 text-brand-700',
@@ -73,6 +81,17 @@ export default function CalendarPage() {
       await reload()
     } catch (err) {
       setError(err instanceof Error ? err.message : '취소하지 못했습니다.')
+    }
+  }
+
+  async function handleComplete(offer: Offer) {
+    if (!confirm('운행완료로 처리할까요? 별점 1점이 적립됩니다.')) return
+    setError(null)
+    try {
+      await completeOffer(offer.id)
+      await reload()
+    } catch (err) {
+      setError(err instanceof Error ? err.message : '완료 처리하지 못했습니다.')
     }
   }
 
@@ -235,14 +254,23 @@ export default function CalendarPage() {
 
               {(offer.status === 'open' || offer.status === 'full') && (
                 <div className="mt-3 flex gap-2">
-                  <Button
-                    variant="secondary"
-                    onClick={() => handleCancel(offer, false)}
-                    className="min-h-[40px] flex-1 text-[13px]"
-                  >
-                    취소
-                  </Button>
-                  {offer.recurringGroupId && (
+                  {hasDeparted(offer.rideDate, offer.departTime) ? (
+                    <Button
+                      onClick={() => handleComplete(offer)}
+                      className="min-h-[40px] flex-1 text-[13px]"
+                    >
+                      운행완료
+                    </Button>
+                  ) : (
+                    <Button
+                      variant="secondary"
+                      onClick={() => handleCancel(offer, false)}
+                      className="min-h-[40px] flex-1 text-[13px]"
+                    >
+                      취소
+                    </Button>
+                  )}
+                  {offer.recurringGroupId && !hasDeparted(offer.rideDate, offer.departTime) && (
                     <Button
                       variant="secondary"
                       onClick={() => handleCancel(offer, true)}
