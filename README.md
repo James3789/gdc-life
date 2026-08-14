@@ -18,6 +18,24 @@ npm run dev          # http://localhost:5173
 > 카카오 길찾기는 Edge Function 을 거치는데, 로컬에서는 이 명령이 떠 있을 때만 동작한다.
 > (배포 환경에서는 `npm run fn:deploy` 한 번이면 상시 동작)
 
+### 테스트 계정
+
+계정은 회원가입으로 만들어지며, `db:reset` 하면 모두 사라진다.
+로컬에서 바로 써 볼 계정이 필요하면:
+
+```bash
+npm run seed
+```
+
+| ID | 이름 / 부서 |
+|---|---|
+| `driver1` | 김봉사 / 스마트십솔루션팀 |
+| `driver2` | 박운전 / 디지털솔루션팀 |
+| `rider1` | 이탑승 / 기술연구소 |
+| `rider2` | 최동승 / 경영지원팀 |
+
+비밀번호는 모두 `gdclife1234`. 로컬 스택이 아니면 스크립트가 실행을 거부한다.
+
 클라우드 프로젝트를 쓸 경우 `db:start` 대신:
 
 ```bash
@@ -98,6 +116,7 @@ Flask + VPS 조합은 월 $5~10이 들고 무료 티어는 콜드스타트가 �
 | `npm run test:directions` | 길찾기 Edge Function 검증 (`fn:serve` 실행 중이어야 함) |
 | `npm run fn:deploy` | 카카오 길찾기 Edge Function 배포 |
 | `npm run geocode` | 주소를 좌표로 변환 |
+| `npm run seed` | 로컬 테스트용 데모 계정 생성 (로컬 스택에서만 동작) |
 
 ---
 
