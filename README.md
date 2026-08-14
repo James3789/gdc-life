@@ -1,6 +1,6 @@
 # GDC Life
 
-HD현대마린솔루션 **글로벌디지털센터(GDC)** 임직원 전용 사내 플랫폼 (모바일 PWA).
+HD현대마린솔루션 **글로벌디지털센터(GDC)** 임직원 대상 모바일 PWA.
 첫 기능은 **출퇴근 카풀 매칭**이며, 홈 대시보드에 기능 모듈을 끼워 넣는 구조로 확장한다.
 
 ---
@@ -8,14 +8,20 @@ HD현대마린솔루션 **글로벌디지털센터(GDC)** 임직원 전용 사�
 ## 빠른 시작
 
 ```bash
-npm run setup   # 최초 1회: .env 생성 + python venv + 패키지 설치
-npm run dev     # 백엔드(:5000) + 프론트(:5173) 동시 실행
+npm install          # 루트 (Supabase CLI)
+npm run setup        # .env 생성 + 프론트 패키지 설치
+npm run db:start     # 로컬 Supabase 스택 (Docker 필요) — 출력된 URL/anon key 를 .env 에 입력
+npm run dev          # http://localhost:5173
 ```
 
-브라우저에서 http://localhost:5173 접속.
+클라우드 프로젝트를 쓸 경우 `db:start` 대신:
 
-> 모바일 실기기 테스트: Vite가 LAN에 바인딩되므로 같은 Wi-Fi에서 `http://<PC의 IP>:5173` 으로 접속한다.
-> API는 Vite proxy를 타므로 별도 설정이 필요 없다.
+```bash
+npx supabase link --project-ref <프로젝트-ref>
+npm run db:push      # 마이그레이션 적용
+```
+
+> 모바일 실기기: Vite가 LAN에 바인딩되므로 같은 Wi-Fi에서 `http://<PC의 IP>:5173` 으로 접속.
 
 ---
 
@@ -23,56 +29,21 @@ npm run dev     # 백엔드(:5000) + 프론트(:5173) 동시 실행
 
 | 영역 | 선택 | 이유 |
 |---|---|---|
-| Frontend | React 19 + Vite + TypeScript + Tailwind v4 | 모바일 우선 반응형, 빠른 HMR |
-| PWA | vite-plugin-pwa (Workbox) | 홈 화면 추가 · 오프라인 셸 |
-| Backend | **Flask** | 개발자 친숙도 + 확장 생태계 |
-| 실시간 | **flask-socketio** | 위치 공유를 API와 같은 프로세스에서 처리 |
-| DB | **SQLAlchemy + SQLite(개발) → PostgreSQL/PostGIS(운영)** | `DATABASE_URL` 만 바꿔 승격 가능 |
-| 지도/경로 | Kakao Maps JS SDK + Kakao Mobility Directions | 국내 주소·도로·경유지 지원 |
+| Frontend | React 19 + Vite + TypeScript + Tailwind v4 | 모바일 우선 반응형 |
+| PWA | vite-plugin-pwa (Workbox) | 홈 화면 추가 · 앱 셸 오프라인 |
+| BaaS | **Supabase** | 개인 운영이라 관리할 서버가 없어야 함 |
+| DB | **Postgres + PostGIS** | 경로 반경 매칭을 `ST_DWithin` 으로 정공법 처리 |
+| 인증 | Supabase Auth (합성 이메일로 ID 로그인) | 아래 *ID 로그인* 참고 |
+| 실시간 | Supabase Realtime **Broadcast** | 위치를 DB에 저장하지 않고 흘려보냄 |
+| 서버 로직 | Edge Functions (Deno) | 카카오 REST 키 은닉 |
+| 지도/경로 | Kakao Maps JS SDK + Kakao Mobility Directions | 국내 주소·도로·경유지 |
 
-**경로 매칭 방식**: 후보가 "같은 날짜 + 같은 방향"으로 좁혀져 수십 건 수준이므로,
-점–경로 최단거리는 서버에서 haversine 기반으로 계산한다. 규모가 커지면 PostGIS `ST_DWithin` 으로 대체 가능하도록
-매칭 로직을 서비스 레이어에 분리해 둔다.
+### 왜 Supabase인가
 
----
-
-## 환경변수
-
-`.env.example` → `.env` 로 복사해서 사용한다. **백엔드·프론트가 같은 파일 하나를 공유**한다
-(Vite `envDir: '..'`). 프론트에서 읽는 값만 `VITE_` 접두사를 붙인다.
-
-| 키 | 설명 |
-|---|---|
-| `JWT_SECRET` | JWT 서명 키 (운영에서 반드시 교체) |
-| `DATABASE_URL` | 기본 `sqlite:///gdclife.db` |
-| `COMPANY_NAME` / `COMPANY_ADDR` / `COMPANY_LAT` / `COMPANY_LNG` | 회사(GDC) 좌표 — **하드코딩 금지, 여기서만 관리** |
-| `MATCH_RADIUS_M` | 탑승 위치가 경로에서 이 거리(m) 이내면 후보 (기본 1000) |
-| `MATCH_DEFAULT_TOLERANCE_MIN` | 기본 시간 허용 오차 (기본 10분) |
-| `REQUIRE_COMPANY_EMAIL` / `COMPANY_EMAIL_DOMAINS` | 사내 이메일 도메인 검증 (기본 off) |
-| `KAKAO_REST_KEY` | 서버에서 길찾기 API 호출 |
-| `VITE_KAKAO_JS_KEY` | 브라우저 지도 SDK |
-
-### 회사 좌표 설정
-
-현재 값은 **울산광역시 남구 신두왕로 50** 도로 기준 근사 좌표다.
-`KAKAO_REST_KEY` 를 넣은 뒤 아래 명령으로 정확한 건물 좌표를 뽑아 `.env` 에 반영한다.
-
-```bash
-backend/.venv/Scripts/python backend/scripts/geocode_company.py   # Windows
-backend/.venv/bin/python backend/scripts/geocode_company.py       # macOS/Linux
-```
-
-프론트는 좌표를 하드코딩하지 않고 `GET /api/meta/config` 로 받아 쓴다.
-
-### Kakao 개발자 콘솔 설정 (지도 사용 전 필수)
-
-1. https://developers.kakao.com 에서 애플리케이션 생성
-2. **앱 키** → JavaScript 키 → `VITE_KAKAO_JS_KEY`, REST API 키 → `KAKAO_REST_KEY`
-3. **플랫폼 → Web → 사이트 도메인** 에 아래를 모두 등록 (등록하지 않으면 지도가 뜨지 않음)
-   - `http://localhost:5173`
-   - `http://<개발 PC의 LAN IP>:5173` (모바일 실기기 테스트용)
-   - 운영 도메인
-4. Kakao Mobility 길찾기 API는 별도 이용 신청이 필요할 수 있다.
+회사 인프라와 무관하게 개인이 운영하므로 **상시 켜둘 백엔드 서버가 없어야** 한다.
+Flask + VPS 조합은 월 $5~10이 들고 무료 티어는 콜드스타트가 길어 출근길 사용에 부적합하다.
+무료 티어 한도(500MB DB / 실시간 200 동시접속 · 월 200만 메시지 / 5만 MAU) 대비
+예상 사용량(위치 5초 간격 · 하루 20건 기준 월 30만~60만 메시지, 경로 저장 월 4MB)이라 여유가 크다.
 
 ---
 
@@ -80,36 +51,122 @@ backend/.venv/bin/python backend/scripts/geocode_company.py       # macOS/Linux
 
 ```
 .
-├── package.json           # npm run setup / dev (루트 원커맨드)
-├── .env.example           # 백엔드·프론트 공용 환경변수
+├── package.json              # 모든 명령의 진입점
+├── .env.example
+├── supabase/
+│   ├── config.toml           # 로컬 스택 · Edge Function 설정
+│   ├── migrations/           # 스키마 + RLS 정책 (SQL)
+│   └── functions/
+│       └── kakao-directions/ # 카카오 길찾기 프록시 (Deno)
 ├── tools/
-│   ├── setup.mjs          # 최초 설치
-│   ├── dev.mjs            # 개발 서버 동시 실행
-│   └── gen_icons.py       # PWA 아이콘 생성 (1회성)
-├── backend/
-│   ├── run.py             # 진입점 (socketio.run)
-│   ├── requirements.txt
-│   ├── scripts/
-│   │   └── geocode_company.py
-│   └── app/
-│       ├── __init__.py    # 앱 팩토리
-│       ├── config.py      # ★ COMPANY_LOCATION 등 모든 설정
-│       ├── extensions.py  # db · migrate · socketio
-│       ├── models/        # ORM (Phase 1~)
-│       └── api/           # 블루프린트
+│   ├── setup.mjs
+│   ├── test-rls.mjs          # ★ 개인정보 격리 자동 검증
+│   ├── geocode-company.mjs   # 주소 → 좌표
+│   └── gen_icons.py          # PWA 아이콘 생성 (1회성, pip install pillow)
 └── frontend/
-    ├── vite.config.ts     # envDir='..', /api·/socket.io proxy, PWA
-    ├── public/icons/
+    ├── vite.config.ts        # envDir='..', PWA
     └── src/
-        ├── App.tsx        # 라우팅
-        ├── components/    # AppShell · BottomTabBar · icons
-        ├── lib/           # api · appConfig · direction
-        ├── modules/       # ★ 기능 모듈 레지스트리 (확장 지점)
+        ├── App.tsx           # 라우팅
+        ├── components/       # AppShell · BottomTabBar · icons
+        ├── lib/              # supabase · appConfig · direction · database.types
+        ├── modules/          # ★ 기능 모듈 레지스트리 (확장 지점)
         └── pages/
 ```
 
 **기능 추가 방법**: `frontend/src/modules/registry.tsx` 에 항목을 추가하고 라우트를 등록하면
 홈 대시보드에 자동 노출된다.
+
+---
+
+## 명령어
+
+| 명령 | 설명 |
+|---|---|
+| `npm run dev` | 프론트 개발 서버 |
+| `npm run build` | 프로덕션 빌드 (`frontend/dist`) |
+| `npm run db:start` / `db:stop` | 로컬 Supabase 스택 |
+| `npm run db:reset` | 로컬 DB 초기화 + 마이그레이션 재적용 |
+| `npm run db:push` | 연결된 클라우드 프로젝트에 마이그레이션 적용 |
+| `npm run gen:types` | 스키마 → `database.types.ts` 재생성 |
+| `npm run test:rls` | **개인정보 격리 검증** (스키마 변경 시 반드시 실행) |
+| `npm run fn:deploy` | 카카오 길찾기 Edge Function 배포 |
+| `npm run geocode` | 주소를 좌표로 변환 |
+
+---
+
+## 설정
+
+### 환경변수 (`.env`)
+
+| 키 | 설명 |
+|---|---|
+| `VITE_SUPABASE_URL` / `VITE_SUPABASE_ANON_KEY` | Supabase 연결 |
+| `VITE_KAKAO_JS_KEY` | 브라우저 지도 SDK (공개되어도 되는 값) |
+| `KAKAO_REST_KEY` | 길찾기 REST 키 — **브라우저로 나가면 안 됨** |
+
+### 회사 좌표 — `.env` 가 아니라 DB에 있다
+
+`app_settings` 테이블 단일 행에 있고, Supabase 대시보드 테이블 에디터에서 바로 수정할 수 있다.
+프론트는 부팅 시 이 행을 읽으므로 좌표를 바꿔도 재배포가 필요 없다.
+
+| 컬럼 | 현재 값 |
+|---|---|
+| `company_name` | HD현대마린솔루션 글로벌디지털센터 |
+| `company_addr` | 울산광역시 남구 신두왕로 50 |
+| `company_lat` / `company_lng` | 35.51809 / 129.28832 ⚠ **도로 기준 근사값** |
+| `match_radius_m` | 1000 |
+| `match_default_tolerance_min` | 10 |
+
+정확한 건물 좌표는 `npm run geocode` 로 얻어 반영한다 (`KAKAO_REST_KEY` 필요).
+
+### Supabase 프로젝트 설정 (클라우드)
+
+1. 리전은 **Seoul (ap-northeast-2)** — 동료들의 연락처·위치를 다루므로 국내에 둔다.
+2. **Authentication → Providers → Email → Confirm email 을 끈다.**
+   ID 로그인용 합성 주소(`@gdc-life.local`)로는 확인 메일을 받을 수 없어,
+   켜져 있으면 **가입 후 아무도 로그인하지 못한다.**
+3. Edge Function 시크릿: `npx supabase secrets set KAKAO_REST_KEY=...`
+
+### ID 로그인 방식
+
+Supabase Auth는 이메일 기반이라, 명세의 사내 ID 로그인을 다음처럼 매핑한다.
+
+```
+login_id "hong12"  →  Auth 이메일  hong12@gdc-life.local
+실제 이메일         →  profile_private.email 에 별도 보관
+```
+
+- ID 중복 검사는 `is_login_id_available()` RPC로 처리한다 (테이블을 열지 않음).
+- **한계**: 합성 주소로는 비밀번호 재설정 메일을 보낼 수 없다.
+  실제 이메일로 재설정하는 흐름은 Phase 1에서 별도 처리한다.
+
+### Kakao 개발자 콘솔
+
+1. https://developers.kakao.com 에서 앱 생성
+2. **앱 키** → JavaScript 키 → `VITE_KAKAO_JS_KEY`, REST API 키 → `KAKAO_REST_KEY`
+3. **플랫폼 → Web → 사이트 도메인** 에 모두 등록 (미등록 시 지도가 뜨지 않음)
+   - `http://localhost:5173`
+   - `http://<개발 PC의 LAN IP>:5173` (모바일 실기기용)
+   - 운영 도메인
+4. Kakao Mobility 길찾기 API는 별도 이용 신청이 필요할 수 있다.
+
+---
+
+## 개인정보 설계
+
+이 앱은 동료의 **전화번호와 실시간 위치**를 다루고, 회사가 아닌 개인이 운영한다.
+따라서 보호 장치를 코드 관례가 아니라 **스키마와 자동 테스트**로 못 박았다.
+
+| 데이터 | 테이블 | 접근 |
+|---|---|---|
+| 이름 · 부서 | `profiles` | 로그인한 직원이면 조회 가능 (검색 카드에 필요) |
+| ID · 이메일 · 전화 | `profile_private` | **본인만** |
+| 전화 (매칭 상대) | Phase 4에서 매칭 조건부 뷰로 개방 | 신청이 **허락된** 상대만 |
+| 실시간 위치 | 저장하지 않음 | Realtime Broadcast로 흘려보내고 운행 종료 시 중단 |
+
+- 프로필은 클라이언트가 만들 수 없다. `auth.users` 트리거로만 생성돼 위조를 막는다.
+- `npm run test:rls` 가 위 격리를 매번 검증한다. **스키마를 바꾸면 반드시 다시 돌린다.**
+- Geolocation 권한을 거부해도 나머지 기능은 정상 동작한다.
 
 ---
 
@@ -133,31 +190,26 @@ backend/.venv/bin/python backend/scripts/geocode_company.py       # macOS/Linux
 
 ## 개발 단계
 
-- [x] **Phase 0** — 스캐폴드: PWA, 반응형 셸, 하단 탭바, 라우팅, 설정 API
-- [ ] **Phase 1** — 인증: 회원가입 / 로그인 / JWT / 프로필
+- [x] **Phase 0** — 스캐폴드: PWA, 반응형 셸, 탭바, 라우팅
+- [x] **Phase 0.5** — Supabase 전환: 스키마 · RLS · Edge Function · RLS 테스트
+- [ ] **Phase 1** — 인증: 회원가입 / ID 로그인 / 프로필
 - [ ] **Phase 2** — 봉사자 카풀 등록 (지도 · 경유지 · 좌석 · 반복 · 달력)
 - [ ] **Phase 3** — 탑승자 검색 · 매칭 추천 · 신청
-- [ ] **Phase 4** — 신청 허락/거절 · 좌석 차감
+- [ ] **Phase 4** — 신청 허락/거절 · 좌석 차감 · 연락처 개방
 - [ ] **Phase 5** — 실시간 위치 공유 · 전화
 - [ ] **Phase 6** — 별점 (월간/연간/누적)
 - [ ] **Phase 7** — 알림 · 반응형 QA · 마감
 
 ---
 
-## 개인정보 원칙
-
-- 전화번호·실시간 위치는 **매칭이 성립한 상대에게만** 노출한다.
-- 위치 공유는 **운행 당일 운행 시간대**로 제한하고, 운행완료·취소 즉시 중단한다.
-- Geolocation 권한을 거부해도 나머지 기능은 정상 동작한다.
-
----
-
-## 프로덕션 빌드
+## 배포
 
 ```bash
-npm run build     # frontend/dist 생성
+npm run build                    # frontend/dist
+npm run db:push                  # 마이그레이션
+npm run fn:deploy                # Edge Function
 ```
 
-`dist/` 를 정적 서버(Nginx 등)로 서빙하고 `/api`, `/socket.io` 를 백엔드로 프록시한다.
-SPA이므로 **정적 서버에 history fallback(`index.html`) 설정**이 필요하다.
-`VITE_API_BASE` 는 프론트와 API 도메인이 다를 때만 채운다.
+`dist/` 는 정적 호스팅(Vercel / Cloudflare Pages / Netlify)에 올린다.
+SPA이므로 **history fallback(`index.html`) 설정이 필요**하다.
+빌드 환경에도 `VITE_SUPABASE_URL` / `VITE_SUPABASE_ANON_KEY` / `VITE_KAKAO_JS_KEY` 를 넣는다.

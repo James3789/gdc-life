@@ -21,8 +21,14 @@ export default function HomePage() {
               <br />
               {company.addr}
             </>
+          ) : state.status === 'unconfigured' ? (
+            <>
+              Supabase 연결 정보가 없습니다.
+              <br />
+              루트 <code>.env</code> 에 VITE_SUPABASE_URL / VITE_SUPABASE_ANON_KEY 를 채워주세요.
+            </>
           ) : state.status === 'error' ? (
-            '서버 설정을 불러오지 못했습니다. 백엔드가 실행 중인지 확인하세요.'
+            `설정을 불러오지 못했습니다: ${state.message}`
           ) : (
             '설정을 불러오는 중…'
           )}

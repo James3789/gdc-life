@@ -6,8 +6,22 @@
   "description": "HD현대마린솔루션 GDC 임직원 전용 사내 플랫폼 (카풀 매칭)",
   "scripts": {
     "setup": "node tools/setup.mjs",
-    "dev": "node tools/dev.mjs",
+    "dev": "npm --prefix frontend run dev",
     "build": "npm --prefix frontend run build",
-    "typecheck": "npm --prefix frontend run typecheck"
+    "typecheck": "npm --prefix frontend run typecheck",
+    "db:start": "supabase start",
+    "db:stop": "supabase stop",
+    "db:reset": "supabase db reset",
+    "db:push": "supabase db push",
+    "db:diff": "supabase db diff",
+    "gen:types": "supabase gen types typescript --local > frontend/src/lib/database.types.ts",
+    "fn:serve": "supabase functions serve",
+    "fn:deploy": "supabase functions deploy kakao-directions",
+    "geocode": "node tools/geocode-company.mjs",
+    "test:rls": "node tools/test-rls.mjs"
+  },
+  "devDependencies": {
+    "@supabase/supabase-js": "^2.112.3",
+    "supabase": "^2.114.0"
   }
 }

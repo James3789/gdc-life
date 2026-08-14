@@ -35,9 +35,8 @@ export default defineConfig({
         ],
       },
       workbox: {
+        // 앱 셸만 프리캐시한다. Supabase/Kakao 응답은 캐시하지 않는다 (실시간성·개인정보)
         globPatterns: ['**/*.{js,css,html,svg,png,woff2}'],
-        // 지도 SDK/타일과 API 응답은 캐시하지 않는다 (실시간성 우선)
-        navigateFallbackDenylist: [/^\/api/, /^\/socket\.io/],
       },
       devOptions: { enabled: false },
     }),
@@ -45,9 +44,5 @@ export default defineConfig({
   server: {
     host: true, // 모바일 실기기에서 같은 Wi-Fi로 접속하기 위해 LAN 바인딩
     port: 5173,
-    proxy: {
-      '/api': { target: 'http://localhost:5000', changeOrigin: true },
-      '/socket.io': { target: 'http://localhost:5000', ws: true },
-    },
   },
 })
