@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
-import { useSearchParams } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 
 import AppShell from '../../components/AppShell'
 import { Alert, Button } from '../../components/ui'
@@ -225,18 +225,26 @@ function RequestCard({
 
       {/* 매칭 성립 시에만 연락처가 열린다 */}
       {contact && (
-        <div className="mt-3 flex items-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-3.5 py-3">
-          <div className="min-w-0 flex-1">
-            <p className="text-[12px] font-semibold text-emerald-700">매칭 성립</p>
-            <p className="truncate text-[14px] font-bold text-emerald-900">{contact.phone}</p>
+        <>
+          <div className="mt-3 flex items-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-3.5 py-3">
+            <div className="min-w-0 flex-1">
+              <p className="text-[12px] font-semibold text-emerald-700">매칭 성립</p>
+              <p className="truncate text-[14px] font-bold text-emerald-900">{contact.phone}</p>
+            </div>
+            <a
+              href={`tel:${contact.phone.replace(/-/g, '')}`}
+              className="shrink-0 rounded-lg bg-emerald-600 px-4 py-2.5 text-[13px] font-semibold text-white active:bg-emerald-700"
+            >
+              📞 전화
+            </a>
           </div>
-          <a
-            href={`tel:${contact.phone.replace(/-/g, '')}`}
-            className="shrink-0 rounded-lg bg-emerald-600 px-4 py-2.5 text-[13px] font-semibold text-white active:bg-emerald-700"
+          <Link
+            to={`/carpool/trip/${request.offerId}`}
+            className="mt-2 block rounded-xl border border-slate-300 bg-white py-3 text-center text-[14px] font-semibold text-slate-700 active:bg-slate-50"
           >
-            📞 전화
-          </a>
-        </div>
+            운행 화면 열기 (실시간 위치)
+          </Link>
+        </>
       )}
 
       {/* 액션 */}

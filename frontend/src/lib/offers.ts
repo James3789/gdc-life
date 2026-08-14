@@ -131,6 +131,25 @@ export async function listMyOffers(fromDate: string, toDate: string): Promise<Of
   return (data as unknown as Row[]).map(toOffer)
 }
 
+/** 카풀 1건 상세 (운행 화면용) */
+export async function getOffer(offerId: string): Promise<Offer | null> {
+  const { data, error } = await supabase
+    .from('carpool_offers')
+    .select(COLUMNS)
+    .eq('id', offerId)
+    .maybeSingle()
+
+  if (error) throw new Error(error.message)
+  return data ? toOffer(data as unknown as Row) : null
+}
+
+/** 지도에 그릴 경로 좌표 (GeoJSON [lng, lat] → {lat, lng}) */
+export async function getOfferRoute(offerId: string): Promise<LatLng[]> {
+  const { data, error } = await supabase.rpc('offer_route_path', { p_offer_id: offerId })
+  if (error) return []
+  return ((data as unknown as [number, number][]) ?? []).map(([lng, lat]) => ({ lat, lng }))
+}
+
 export async function cancelOffer(offerId: string, wholeGroup = false): Promise<number> {
   const { data, error } = await supabase.rpc('cancel_carpool_offers', {
     p_offer_id: offerId,

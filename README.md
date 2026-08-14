@@ -131,6 +131,7 @@ Flask + VPS 조합은 월 $5~10이 들고 무료 티어는 콜드스타트가 �
 | `npm run test:offers` | 카풀 등록·취소·권한 검증 |
 | `npm run test:search` | 매칭 검색·신청 검증 |
 | `npm run test:matching` | 좌석 동시성·연락처 공개 범위 검증 |
+| `npm run test:location` | 실시간 위치 채널 접근 통제 검증 |
 | `npm run test:directions` | 길찾기 Edge Function 검증 (`fn:serve` 실행 중이어야 함) |
 | `npm run fn:deploy` | 카카오 길찾기 Edge Function 배포 |
 | `npm run geocode` | 주소를 좌표로 변환 |
@@ -233,11 +234,27 @@ login_id "hong12"  →  Auth 이메일  hong12@gdc-life.local
 | 이름 · 부서 | `profiles` | 로그인한 직원이면 조회 가능 (검색 카드에 필요) |
 | ID · 이메일 · 전화 | `profile_private` | **본인만** |
 | 전화 (매칭 상대) | `matched_contacts` 뷰 | 신청이 **허락된** 상대만 |
-| 실시간 위치 | 저장하지 않음 | Realtime Broadcast로 흘려보내고 운행 종료 시 중단 |
+| 실시간 위치 | **저장하지 않음** | Realtime Broadcast, 아래 조건을 모두 만족할 때만 |
 
 - 프로필은 클라이언트가 만들 수 없다. `auth.users` 트리거로만 생성돼 위조를 막는다.
 - `npm run test:rls` 가 위 격리를 매번 검증한다. **스키마를 바꾸면 반드시 다시 돌린다.**
 - Geolocation 권한을 거부해도 나머지 기능은 정상 동작한다.
+
+### 실시간 위치 — 채널 접근 통제
+
+위치는 DB에 남지 않고 Broadcast 로만 흐르므로, 방어선은 **"누가 그 채널에 들어올 수 있는가"** 하나다.
+채널 이름은 `trip:<offer_id>` 이고, Supabase Realtime 의 private 채널 기능을 써서
+`realtime.messages` 의 RLS 로 입장을 통제한다. 다음을 **모두** 만족해야 입장된다.
+
+1. 그 카풀의 봉사자이거나, 신청이 **허락된** 탑승자
+2. 카풀이 취소·운행완료 상태가 아님
+3. **출발 30분 전 ~ 출발 3시간 후** (KST 기준)
+
+조건이 깨지면 구독 자체가 실패한다 — 클라이언트가 막는 게 아니라 서버가 막는다.
+`test:location` 이 대기 중 탑승자·제3자·시간대 밖·매칭 해제 후를 매번 확인한다.
+
+> `realtime.messages` 의 소유자는 `supabase_realtime_admin` 이라 마이그레이션(postgres 역할)에서
+> `ENABLE ROW LEVEL SECURITY` 는 실행할 수 없다. 이미 켜져 있으므로 정책만 만들면 된다.
 
 ### 좌석 동시성
 
@@ -284,7 +301,7 @@ anon 키도 유효한 JWT 이고 프론트 번들에 그대로 실려 나가므�
       (등록 후 세부 수정은 미지원 — 취소 후 재등록. 좌석 정합성 때문에 Phase 4 이후로 미룸)
 - [x] **Phase 3** — 탑승자 검색 · 매칭 추천 · 신청
 - [x] **Phase 4** — 신청 허락/거절 · 좌석 차감 · 연락처 개방 · 전화 버튼
-- [ ] **Phase 5** — 실시간 위치 공유 · 전화
+- [x] **Phase 5** — 실시간 위치 공유 · 전화
 - [ ] **Phase 6** — 별점 (월간/연간/누적)
 - [ ] **Phase 7** — 알림 · 반응형 QA · 마감
 

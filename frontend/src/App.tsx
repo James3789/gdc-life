@@ -10,7 +10,8 @@ import CarpoolHome from './pages/carpool/CarpoolHome'
 import OfferNewPage from './pages/carpool/OfferNewPage'
 import RequestsPage from './pages/carpool/RequestsPage'
 import SearchPage from './pages/carpool/SearchPage'
-import { NotFoundPage, TripPage } from './pages/stubs'
+import TripPage from './pages/carpool/TripPage'
+import { NotFoundPage } from './pages/stubs'
 
 export default function App() {
   return (

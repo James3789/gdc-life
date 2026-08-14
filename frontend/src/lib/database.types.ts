@@ -375,6 +375,8 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      can_share_location: { Args: { p_offer_id: string }; Returns: boolean }
+      can_use_trip_channel: { Args: { p_topic: string }; Returns: boolean }
       cancel_carpool_offers: {
         Args: { p_offer_id: string; p_whole_group?: boolean }
         Returns: number
@@ -446,6 +448,7 @@ export type Database = {
         }
       }
       is_login_id_available: { Args: { p_login_id: string }; Returns: boolean }
+      offer_route_path: { Args: { p_offer_id: string }; Returns: Json }
       reject_carpool_request: {
         Args: { p_request_id: string }
         Returns: {
