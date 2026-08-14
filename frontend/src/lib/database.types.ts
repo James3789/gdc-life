@@ -73,6 +73,89 @@ export type Database = {
         }
         Relationships: []
       }
+      carpool_offers: {
+        Row: {
+          created_at: string
+          depart_time: string
+          dest_addr: string
+          dest_lat: number
+          dest_lng: number
+          dest_point: unknown
+          direction: Database["public"]["Enums"]["carpool_direction"]
+          driver_id: string
+          id: string
+          origin_addr: string
+          origin_lat: number
+          origin_lng: number
+          origin_point: unknown
+          recurring_group_id: string | null
+          ride_date: string
+          route: unknown
+          route_distance_m: number | null
+          route_duration_s: number | null
+          seats_available: number
+          seats_total: number
+          status: Database["public"]["Enums"]["offer_status"]
+          waypoints: Json
+        }
+        Insert: {
+          created_at?: string
+          depart_time: string
+          dest_addr: string
+          dest_lat: number
+          dest_lng: number
+          dest_point?: unknown
+          direction: Database["public"]["Enums"]["carpool_direction"]
+          driver_id: string
+          id?: string
+          origin_addr: string
+          origin_lat: number
+          origin_lng: number
+          origin_point?: unknown
+          recurring_group_id?: string | null
+          ride_date: string
+          route?: unknown
+          route_distance_m?: number | null
+          route_duration_s?: number | null
+          seats_available: number
+          seats_total?: number
+          status?: Database["public"]["Enums"]["offer_status"]
+          waypoints?: Json
+        }
+        Update: {
+          created_at?: string
+          depart_time?: string
+          dest_addr?: string
+          dest_lat?: number
+          dest_lng?: number
+          dest_point?: unknown
+          direction?: Database["public"]["Enums"]["carpool_direction"]
+          driver_id?: string
+          id?: string
+          origin_addr?: string
+          origin_lat?: number
+          origin_lng?: number
+          origin_point?: unknown
+          recurring_group_id?: string | null
+          ride_date?: string
+          route?: unknown
+          route_distance_m?: number | null
+          route_duration_s?: number | null
+          seats_available?: number
+          seats_total?: number
+          status?: Database["public"]["Enums"]["offer_status"]
+          waypoints?: Json
+        }
+        Relationships: [
+          {
+            foreignKeyName: "carpool_offers_driver_id_fkey"
+            columns: ["driver_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profile_private: {
         Row: {
           email: string
@@ -128,10 +211,59 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      cancel_carpool_offers: {
+        Args: { p_offer_id: string; p_whole_group?: boolean }
+        Returns: number
+      }
+      create_carpool_offers: {
+        Args: {
+          p_dates: string[]
+          p_depart_time: string
+          p_dest: Json
+          p_direction: Database["public"]["Enums"]["carpool_direction"]
+          p_origin: Json
+          p_route?: Json
+          p_route_distance_m?: number
+          p_route_duration_s?: number
+          p_seats_total?: number
+          p_waypoints?: Json
+        }
+        Returns: {
+          created_at: string
+          depart_time: string
+          dest_addr: string
+          dest_lat: number
+          dest_lng: number
+          dest_point: unknown
+          direction: Database["public"]["Enums"]["carpool_direction"]
+          driver_id: string
+          id: string
+          origin_addr: string
+          origin_lat: number
+          origin_lng: number
+          origin_point: unknown
+          recurring_group_id: string | null
+          ride_date: string
+          route: unknown
+          route_distance_m: number | null
+          route_duration_s: number | null
+          seats_available: number
+          seats_total: number
+          status: Database["public"]["Enums"]["offer_status"]
+          waypoints: Json
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "carpool_offers"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
       is_login_id_available: { Args: { p_login_id: string }; Returns: boolean }
     }
     Enums: {
-      [_ in never]: never
+      carpool_direction: "commute-in" | "commute-out"
+      offer_status: "open" | "full" | "done" | "cancelled"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -261,7 +393,10 @@ export const Constants = {
     Enums: {},
   },
   public: {
-    Enums: {},
+    Enums: {
+      carpool_direction: ["commute-in", "commute-out"],
+      offer_status: ["open", "full", "done", "cancelled"],
+    },
   },
 } as const
 
