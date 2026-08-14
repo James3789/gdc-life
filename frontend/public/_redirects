@@ -1,0 +1,5 @@
+# SPA history fallback
+# /carpool/search 같은 주소로 새로고침해도 index.html 을 돌려주게 한다.
+# 이 파일이 없으면 정적 호스팅에서 새로고침 시 404 가 난다.
+# (Cloudflare Pages / Netlify 공통 형식)
+/*    /index.html   200
