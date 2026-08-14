@@ -1,16 +1,17 @@
-import { Navigate, Route, Routes } from 'react-router-dom'
+import { Navigate, Outlet, Route, Routes } from 'react-router-dom'
 
+import { RedirectIfAuthed, RequireAuth } from './components/RequireAuth'
 import HomePage from './pages/HomePage'
+import ProfilePage from './pages/ProfilePage'
+import LoginPage from './pages/auth/LoginPage'
+import SignupPage from './pages/auth/SignupPage'
 import CarpoolHome from './pages/carpool/CarpoolHome'
 import {
   CalendarPage,
-  LoginPage,
   NotFoundPage,
   OfferNewPage,
-  ProfilePage,
   RequestsPage,
   SearchPage,
-  SignupPage,
   TripPage,
 } from './pages/stubs'
 
@@ -19,19 +20,41 @@ export default function App() {
     <Routes>
       <Route path="/" element={<Navigate to="/home" replace />} />
 
-      <Route path="/login" element={<LoginPage />} />
-      <Route path="/signup" element={<SignupPage />} />
+      {/* 비로그인 전용 */}
+      <Route
+        path="/login"
+        element={
+          <RedirectIfAuthed>
+            <LoginPage />
+          </RedirectIfAuthed>
+        }
+      />
+      <Route
+        path="/signup"
+        element={
+          <RedirectIfAuthed>
+            <SignupPage />
+          </RedirectIfAuthed>
+        }
+      />
 
-      <Route path="/home" element={<HomePage />} />
-
-      <Route path="/carpool" element={<CarpoolHome />} />
-      <Route path="/carpool/offer/new" element={<OfferNewPage />} />
-      <Route path="/carpool/search" element={<SearchPage />} />
-      <Route path="/carpool/calendar" element={<CalendarPage />} />
-      <Route path="/carpool/requests" element={<RequestsPage />} />
-      <Route path="/carpool/trip/:id" element={<TripPage />} />
-
-      <Route path="/profile" element={<ProfilePage />} />
+      {/* 로그인 필요 */}
+      <Route
+        element={
+          <RequireAuth>
+            <Outlet />
+          </RequireAuth>
+        }
+      >
+        <Route path="/home" element={<HomePage />} />
+        <Route path="/carpool" element={<CarpoolHome />} />
+        <Route path="/carpool/offer/new" element={<OfferNewPage />} />
+        <Route path="/carpool/search" element={<SearchPage />} />
+        <Route path="/carpool/calendar" element={<CalendarPage />} />
+        <Route path="/carpool/requests" element={<RequestsPage />} />
+        <Route path="/carpool/trip/:id" element={<TripPage />} />
+        <Route path="/profile" element={<ProfilePage />} />
+      </Route>
 
       <Route path="*" element={<NotFoundPage />} />
     </Routes>

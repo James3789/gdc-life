@@ -1,35 +1,7 @@
-/** Phase 0 스캐폴드 자리표시자 화면들.
- *  각 Phase 진행 시 개별 파일로 분리되며 실제 구현으로 대체된다.
- */
+/** 아직 구현 전인 화면들. 각 Phase에서 개별 파일로 분리되며 실제 구현으로 대체된다. */
 
 import AppShell from '../components/AppShell'
 import ComingSoon from '../components/ComingSoon'
-
-export function LoginPage() {
-  return (
-    <AppShell title="로그인" subtitle="GDC Life" tabs={false}>
-      <ComingSoon
-        phase="Phase 1"
-        items={['ID / 비밀번호 로그인', 'JWT access · refresh 발급', '자동 로그인 유지']}
-      />
-    </AppShell>
-  )
-}
-
-export function SignupPage() {
-  return (
-    <AppShell title="회원가입" subtitle="GDC Life" back tabs={false}>
-      <ComingSoon
-        phase="Phase 1"
-        items={[
-          'ID · 비밀번호 · 성명 · 부서 · 이메일 · 전화번호',
-          'ID 중복 검사, 형식 검증',
-          '사내 이메일 도메인 검증(설정 on/off)',
-        ]}
-      />
-    </AppShell>
-  )
-}
 
 export function OfferNewPage() {
   return (
@@ -69,7 +41,11 @@ export function RequestsPage() {
     <AppShell title="신청함" subtitle="받은 신청 · 내 신청">
       <ComingSoon
         phase="Phase 4"
-        items={['봉사자: 받은 신청 허락 / 거절', '좌석 차감 및 마감 처리', '탑승자: 내 신청 현황']}
+        items={[
+          '봉사자: 받은 신청 허락 / 거절',
+          '좌석 차감 및 마감 처리',
+          '허락된 상대에게만 전화번호 공개',
+        ]}
       />
     </AppShell>
   )
@@ -96,17 +72,6 @@ export function TripPage() {
           'Geolocation 권한 거부 시에도 정상 동작',
           '전화 버튼 (tel: 링크)',
         ]}
-      />
-    </AppShell>
-  )
-}
-
-export function ProfilePage() {
-  return (
-    <AppShell title="내 정보" subtitle="프로필 · 별점">
-      <ComingSoon
-        phase="Phase 1 · 6"
-        items={['내 정보 조회 / 수정', '별점 월간 · 연간 · 누적', '최근 운행 이력']}
       />
     </AppShell>
   )

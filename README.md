@@ -88,7 +88,9 @@ Flask + VPS 조합은 월 $5~10이 들고 무료 티어는 콜드스타트가 �
 | `npm run db:reset` | 로컬 DB 초기화 + 마이그레이션 재적용 |
 | `npm run db:push` | 연결된 클라우드 프로젝트에 마이그레이션 적용 |
 | `npm run gen:types` | 스키마 → `database.types.ts` 재생성 |
+| `npm run test` | 아래 두 검증을 모두 실행 |
 | `npm run test:rls` | **개인정보 격리 검증** (스키마 변경 시 반드시 실행) |
+| `npm run test:auth` | 가입·로그인 흐름과 유효성 규칙 검증 |
 | `npm run fn:deploy` | 카카오 길찾기 Edge Function 배포 |
 | `npm run geocode` | 주소를 좌표로 변환 |
 
@@ -125,7 +127,11 @@ Flask + VPS 조합은 월 $5~10이 들고 무료 티어는 콜드스타트가 �
 2. **Authentication → Providers → Email → Confirm email 을 끈다.**
    ID 로그인용 합성 주소(`@gdc-life.local`)로는 확인 메일을 받을 수 없어,
    켜져 있으면 **가입 후 아무도 로그인하지 못한다.**
-3. Edge Function 시크릿: `npx supabase secrets set KAKAO_REST_KEY=...`
+3. **Authentication → Policies → 비밀번호 정책**을 `supabase/config.toml` 과 맞춘다.
+   최소 길이 **8**, 요구사항 **letters_digits**.
+   `config.toml` 은 로컬 스택에만 적용되므로 클라우드는 대시보드에서 따로 설정해야 하고,
+   맞추지 않으면 프론트 유효성 검사와 서버 정책이 어긋난다.
+4. Edge Function 시크릿: `npx supabase secrets set KAKAO_REST_KEY=...`
 
 ### ID 로그인 방식
 
@@ -137,8 +143,20 @@ login_id "hong12"  →  Auth 이메일  hong12@gdc-life.local
 ```
 
 - ID 중복 검사는 `is_login_id_available()` RPC로 처리한다 (테이블을 열지 않음).
-- **한계**: 합성 주소로는 비밀번호 재설정 메일을 보낼 수 없다.
-  실제 이메일로 재설정하는 흐름은 Phase 1에서 별도 처리한다.
+- 대소문자는 가입 트리거에서 소문자로 정규화하므로 `Hong12` 로 가입해도 `hong12` 로 로그인된다.
+
+#### 한계 — 비밀번호 재설정 (미구현)
+
+합성 주소(`@gdc-life.local`)는 실재하지 않으므로 Supabase의 기본 재설정 메일이 도달하지 않는다.
+현재는 **비밀번호를 잊으면 스스로 복구할 수 없다.** 선택지는 다음과 같다.
+
+| 방식 | 내용 | 비용 |
+|---|---|---|
+| 관리자 수동 초기화 | 대시보드에서 비밀번호 재설정 | 0 — 사용자가 적을 때 현실적 |
+| 실제 이메일로 재설정 | Edge Function이 ID→실제 이메일을 찾아 재설정 링크 발송 | SMTP 설정 + 함수 1개 |
+| 이메일 로그인으로 전환 | 별도 ID를 없애고 사내 이메일로 로그인 | 명세 변경 |
+
+가입 폼에 **비밀번호 확인** 필드를 둔 것도 이 제약 때문이다.
 
 ### Kakao 개발자 콘솔
 
@@ -192,7 +210,8 @@ login_id "hong12"  →  Auth 이메일  hong12@gdc-life.local
 
 - [x] **Phase 0** — 스캐폴드: PWA, 반응형 셸, 탭바, 라우팅
 - [x] **Phase 0.5** — Supabase 전환: 스키마 · RLS · Edge Function · RLS 테스트
-- [ ] **Phase 1** — 인증: 회원가입 / ID 로그인 / 프로필
+- [x] **Phase 1** — 인증: 회원가입 / ID 로그인 / 프로필 · 라우트 보호
+      (비밀번호 재설정은 미구현 — 아래 *한계* 참고)
 - [ ] **Phase 2** — 봉사자 카풀 등록 (지도 · 경유지 · 좌석 · 반복 · 달력)
 - [ ] **Phase 3** — 탑승자 검색 · 매칭 추천 · 신청
 - [ ] **Phase 4** — 신청 허락/거절 · 좌석 차감 · 연락처 개방

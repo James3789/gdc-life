@@ -3,7 +3,7 @@
   "private": true,
   "version": "0.1.0",
   "type": "module",
-  "description": "HD현대마린솔루션 GDC 임직원 전용 사내 플랫폼 (카풀 매칭)",
+  "description": "HD?꾨?留덈┛?붾（??GDC ?꾩쭅???꾩슜 ?щ궡 ?뚮옯??(移댄? 留ㅼ묶)",
   "scripts": {
     "setup": "node tools/setup.mjs",
     "dev": "npm --prefix frontend run dev",
@@ -18,7 +18,9 @@
     "fn:serve": "supabase functions serve",
     "fn:deploy": "supabase functions deploy kakao-directions",
     "geocode": "node tools/geocode-company.mjs",
-    "test:rls": "node tools/test-rls.mjs"
+    "test:rls": "node tools/test-rls.mjs",
+    "test:auth": "node tools/test-auth.mjs",
+    "test": "node tools/test-rls.mjs && node tools/test-auth.mjs"
   },
   "devDependencies": {
     "@supabase/supabase-js": "^2.112.3",

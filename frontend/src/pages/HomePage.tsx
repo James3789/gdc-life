@@ -3,16 +3,20 @@ import { Link } from 'react-router-dom'
 import AppShell from '../components/AppShell'
 import { ChevronRightIcon } from '../components/icons'
 import { useAppConfigState } from '../lib/appConfig'
+import { useAuth } from '../lib/auth'
 import { MODULES } from '../modules/registry'
 
 export default function HomePage() {
   const state = useAppConfigState()
+  const { me } = useAuth()
   const company = state.status === 'ready' ? state.config.company : null
 
   return (
     <AppShell title="GDC Life" subtitle={company?.name ?? 'HD현대마린솔루션'}>
       <section className="rounded-2xl bg-gradient-to-br from-brand-600 to-brand-800 p-5 text-white">
-        <p className="text-sm text-brand-100">안녕하세요 👋</p>
+        <p className="text-sm text-brand-100">
+          {me ? `${me.name}님, 안녕하세요 👋` : '안녕하세요 👋'}
+        </p>
         <h2 className="mt-1 text-xl font-bold">오늘도 안전 운행하세요</h2>
         <p className="mt-3 text-[13px] leading-relaxed text-brand-100">
           {company ? (
