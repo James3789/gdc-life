@@ -91,6 +91,7 @@ Flask + VPS 조합은 월 $5~10이 들고 무료 티어는 콜드스타트가 �
 | `npm run test` | 아래 두 검증을 모두 실행 |
 | `npm run test:rls` | **개인정보 격리 검증** (스키마 변경 시 반드시 실행) |
 | `npm run test:auth` | 가입·로그인 흐름과 유효성 규칙 검증 |
+| `npm run test:directions` | 길찾기 Edge Function 검증 (`fn:serve` 실행 중이어야 함) |
 | `npm run fn:deploy` | 카카오 길찾기 Edge Function 배포 |
 | `npm run geocode` | 주소를 좌표로 변환 |
 
@@ -160,13 +161,23 @@ login_id "hong12"  →  Auth 이메일  hong12@gdc-life.local
 
 ### Kakao 개발자 콘솔
 
+이 앱은 **서로 다른 두 카카오 서비스**를 쓴다. 각각 따로 켜야 한다.
+
+| 용도 | 서비스 | 키 | 상태 |
+|---|---|---|---|
+| 지도 표시 · 주소/장소 검색 | 카카오맵 (지도/로컬) | JS 키 + REST 키 | **활성화 필요** |
+| 경로 계산 (경유지 포함) | 카카오모빌리티 Directions | REST 키 | 동작 확인됨 |
+
 1. https://developers.kakao.com 에서 앱 생성
 2. **앱 키** → JavaScript 키 → `VITE_KAKAO_JS_KEY`, REST API 키 → `KAKAO_REST_KEY`
-3. **플랫폼 → Web → 사이트 도메인** 에 모두 등록 (미등록 시 지도가 뜨지 않음)
+3. **내 애플리케이션 → 제품 설정 → 카카오맵 → 활성화 설정을 ON** 으로 바꾼다.
+   끄져 있으면 주소검색과 지도 SDK가 아래 오류로 실패한다:
+   `App(...) disabled OPEN_MAP_AND_LOCAL service.`
+   (2024-12-01부터 신규 앱은 기본 비활성. 권한이 없으면 앱 권한 신청이 필요할 수 있다.)
+4. **플랫폼 → Web → 사이트 도메인** 에 모두 등록 (미등록 시 지도가 뜨지 않음)
    - `http://localhost:5173`
    - `http://<개발 PC의 LAN IP>:5173` (모바일 실기기용)
    - 운영 도메인
-4. Kakao Mobility 길찾기 API는 별도 이용 신청이 필요할 수 있다.
 
 ---
 
@@ -185,6 +196,14 @@ login_id "hong12"  →  Auth 이메일  hong12@gdc-life.local
 - 프로필은 클라이언트가 만들 수 없다. `auth.users` 트리거로만 생성돼 위조를 막는다.
 - `npm run test:rls` 가 위 격리를 매번 검증한다. **스키마를 바꾸면 반드시 다시 돌린다.**
 - Geolocation 권한을 거부해도 나머지 기능은 정상 동작한다.
+
+### Edge Function 인증 주의
+
+`verify_jwt = true` 는 **"서명이 유효한 토큰"** 만 보장한다.
+anon 키도 유효한 JWT 이고 프론트 번들에 그대로 실려 나가므로, 이것만으로는
+누구나 함수를 호출해 카카오 쿼터를 소진시킬 수 있다.
+따라서 함수 안에서 `supabase.auth.getUser()` 로 **실제 로그인 사용자인지 한 번 더 확인**한다.
+새 Edge Function 을 추가할 때도 같은 패턴을 따를 것.
 
 ---
 

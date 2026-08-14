@@ -3,7 +3,7 @@
   "private": true,
   "version": "0.1.0",
   "type": "module",
-  "description": "HD?꾨?留덈┛?붾（??GDC ?꾩쭅???꾩슜 ?щ궡 ?뚮옯??(移댄? 留ㅼ묶)",
+  "description": "HD?袁?筌띾뜄??遺억펷??GDC ?袁⑹춦???袁⑹뒠 ??沅????삸??(燁삳똾? 筌띲끉臾?",
   "scripts": {
     "setup": "node tools/setup.mjs",
     "dev": "npm --prefix frontend run dev",
@@ -20,6 +20,7 @@
     "geocode": "node tools/geocode-company.mjs",
     "test:rls": "node tools/test-rls.mjs",
     "test:auth": "node tools/test-auth.mjs",
+    "test:directions": "node tools/test-directions.mjs",
     "test": "node tools/test-rls.mjs && node tools/test-auth.mjs"
   },
   "devDependencies": {

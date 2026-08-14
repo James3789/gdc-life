@@ -8,9 +8,17 @@
  *   npx supabase secrets set KAKAO_REST_KEY=...
  *   npx supabase functions deploy kakao-directions
  *
- * 호출 (로그인 필요 — verify_jwt = true):
+ * 호출 (로그인 필요):
  *   supabase.functions.invoke('kakao-directions', { body: { origin, destination, waypoints } })
+ *
+ * 인증을 두 겹으로 둔다:
+ *   1) config.toml 의 verify_jwt — 서명이 유효한 토큰인지
+ *   2) 아래 getUser() — 그 토큰이 '로그인한 사용자'의 것인지
+ * anon 키도 서명이 유효한 JWT 라서 1)만으로는 통과한다. anon 키는 프론트 번들에
+ * 그대로 실려 나가므로, 2)가 없으면 누구나 카카오 쿼터를 소진시킬 수 있다.
  */
+
+import { createClient } from 'jsr:@supabase/supabase-js@2'
 
 type Point = { lat: number; lng: number }
 
@@ -46,6 +54,18 @@ function isPoint(v: unknown): v is Point {
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: CORS })
   if (req.method !== 'POST') return json({ error: 'method_not_allowed' }, 405)
+
+  // ── 로그인한 사용자인지 확인 (anon 키 호출 차단) ──
+  const authHeader = req.headers.get('Authorization') ?? ''
+  if (!authHeader.startsWith('Bearer ')) return json({ error: 'unauthorized' }, 401)
+
+  const supabase = createClient(
+    Deno.env.get('SUPABASE_URL') ?? '',
+    Deno.env.get('SUPABASE_ANON_KEY') ?? '',
+    { global: { headers: { Authorization: authHeader } }, auth: { persistSession: false } },
+  )
+  const { data: auth, error: authError } = await supabase.auth.getUser()
+  if (authError || !auth?.user) return json({ error: 'unauthorized' }, 401)
 
   const key = Deno.env.get('KAKAO_REST_KEY')
   if (!key) return json({ error: 'kakao_key_missing' }, 500)
