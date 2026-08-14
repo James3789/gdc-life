@@ -141,6 +141,7 @@ Flask + VPS 조합은 월 $5~10이 들고 무료 티어는 콜드스타트가 �
 | `npm run geocode` | 주소를 좌표로 변환 |
 | `npm run seed` | 로컬 테스트용 데모 계정·데이터 생성 (로컬 스택에서만 동작) |
 | `npm run purge` | 계정 정리 — 관리자 외 삭제 (기본은 미리보기) |
+| `npm run preflight` | 배포 전 점검 (키 유출·Edge Function·정적 파일) |
 
 ---
 
@@ -402,6 +403,8 @@ auth.users
 `auth.users` 를 SQL 로 직접 지우는 방법은 Supabase 가 auth 스키마 쓰기를 제한하고 있어 권장하지 않는다.
 
 ## 배포
+
+**단계별 안내는 [DEPLOY.md](DEPLOY.md) 참고.** 아래는 요약이다.
 
 ```bash
 npm run build                    # frontend/dist
