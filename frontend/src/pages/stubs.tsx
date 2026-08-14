@@ -3,21 +3,6 @@
 import AppShell from '../components/AppShell'
 import ComingSoon from '../components/ComingSoon'
 
-export function RequestsPage() {
-  return (
-    <AppShell title="신청함" subtitle="받은 신청 · 내 신청">
-      <ComingSoon
-        phase="Phase 4"
-        items={[
-          '봉사자: 받은 신청 허락 / 거절',
-          '좌석 차감 및 마감 처리',
-          '허락된 상대에게만 전화번호 공개',
-        ]}
-      />
-    </AppShell>
-  )
-}
-
 export function TripPage() {
   return (
     <AppShell title="카풀 상세" subtitle="매칭 성립" back tabs={false}>

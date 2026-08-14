@@ -182,9 +182,43 @@ for (const plan of PLANS) {
     )
 }
 
+// ── 샘플 신청 ─────────────────────────────────────────────────
+// driver1 로 로그인하면 신청함에 대기 건이 보이도록 미리 하나 넣어 둔다.
+console.log('\n▶ 샘플 신청')
+{
+  const { client: riderClient } = await signIn('rider1')
+  const { data: target } = await riderClient
+    .from('carpool_offers')
+    .select('id, depart_time, origin_addr')
+    .eq('direction', 'commute-in')
+    .eq('ride_date', dates[0])
+    .eq('status', 'open')
+    .order('depart_time')
+    .limit(1)
+
+  if (!target?.length) {
+    console.log('  · 신청할 카풀이 없습니다 — 건너뜀')
+  } else {
+    // 삼산동↔GDC 경로 중간 부근
+    const board = { lat: 35.5223, lng: 129.3055, addr: '울산 남구 달동' }
+    const { error } = await riderClient.rpc('request_carpool', {
+      p_offer_id: target[0].id,
+      p_lat: board.lat,
+      p_lng: board.lng,
+      p_addr: board.addr,
+      p_desired_time: '07:35',
+      p_tolerance: 10,
+    })
+    if (error) console.log(`  · 신청 건너뜀: ${error.message}`)
+    else console.log(`  ✓ rider1 → ${dates[0]} ${target[0].depart_time.slice(0, 5)} 카풀에 신청 (대기중)`)
+  }
+}
+
 console.log(`
 ──────────────────────────────
   비밀번호는 모두  ${PASSWORD}
   샘플 카풀 기간   ${dates[0]} ~ ${dates[dates.length - 1]}
+
+  driver1 로 로그인 → 신청함에 대기 건 1개
 ──────────────────────────────
 `)

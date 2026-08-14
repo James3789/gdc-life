@@ -8,8 +8,9 @@ import SignupPage from './pages/auth/SignupPage'
 import CalendarPage from './pages/carpool/CalendarPage'
 import CarpoolHome from './pages/carpool/CarpoolHome'
 import OfferNewPage from './pages/carpool/OfferNewPage'
+import RequestsPage from './pages/carpool/RequestsPage'
 import SearchPage from './pages/carpool/SearchPage'
-import { NotFoundPage, RequestsPage, TripPage } from './pages/stubs'
+import { NotFoundPage, TripPage } from './pages/stubs'
 
 export default function App() {
   return (

@@ -151,6 +151,13 @@ export type Database = {
             foreignKeyName: "carpool_offers_driver_id_fkey"
             columns: ["driver_id"]
             isOneToOne: false
+            referencedRelation: "matched_contacts"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "carpool_offers_driver_id_fkey"
+            columns: ["driver_id"]
+            isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
@@ -208,6 +215,13 @@ export type Database = {
             foreignKeyName: "carpool_requests_passenger_id_fkey"
             columns: ["passenger_id"]
             isOneToOne: false
+            referencedRelation: "matched_contacts"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "carpool_requests_passenger_id_fkey"
+            columns: ["passenger_id"]
+            isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
@@ -236,6 +250,13 @@ export type Database = {
           points?: number
         }
         Relationships: [
+          {
+            foreignKeyName: "driver_ratings_driver_id_fkey"
+            columns: ["driver_id"]
+            isOneToOne: false
+            referencedRelation: "matched_contacts"
+            referencedColumns: ["user_id"]
+          },
           {
             foreignKeyName: "driver_ratings_driver_id_fkey"
             columns: ["driver_id"]
@@ -276,6 +297,13 @@ export type Database = {
             foreignKeyName: "profile_private_id_fkey"
             columns: ["id"]
             isOneToOne: true
+            referencedRelation: "matched_contacts"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "profile_private_id_fkey"
+            columns: ["id"]
+            isOneToOne: true
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
@@ -304,9 +332,49 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      matched_contacts: {
+        Row: {
+          department: string | null
+          name: string | null
+          offer_id: string | null
+          phone: string | null
+          request_id: string | null
+          user_id: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "carpool_requests_offer_id_fkey"
+            columns: ["offer_id"]
+            isOneToOne: false
+            referencedRelation: "carpool_offers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
+      accept_carpool_request: {
+        Args: { p_request_id: string }
+        Returns: {
+          board_addr: string
+          board_lat: number
+          board_lng: number
+          board_point: unknown
+          created_at: string
+          desired_time: string
+          id: string
+          offer_id: string
+          passenger_id: string
+          status: Database["public"]["Enums"]["request_status"]
+          time_tolerance: number
+        }
+        SetofOptions: {
+          from: "*"
+          to: "carpool_requests"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       cancel_carpool_offers: {
         Args: { p_offer_id: string; p_whole_group?: boolean }
         Returns: number
@@ -378,6 +446,28 @@ export type Database = {
         }
       }
       is_login_id_available: { Args: { p_login_id: string }; Returns: boolean }
+      reject_carpool_request: {
+        Args: { p_request_id: string }
+        Returns: {
+          board_addr: string
+          board_lat: number
+          board_lng: number
+          board_point: unknown
+          created_at: string
+          desired_time: string
+          id: string
+          offer_id: string
+          passenger_id: string
+          status: Database["public"]["Enums"]["request_status"]
+          time_tolerance: number
+        }
+        SetofOptions: {
+          from: "*"
+          to: "carpool_requests"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       request_carpool: {
         Args: {
           p_addr: string

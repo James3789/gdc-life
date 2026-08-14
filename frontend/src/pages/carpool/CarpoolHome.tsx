@@ -1,15 +1,27 @@
+import { useEffect, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 
 import AppShell from '../../components/AppShell'
 import { ChevronRightIcon } from '../../components/icons'
 import { DIRECTIONS, type Direction, isDirection } from '../../lib/direction'
 import { useAppConfig } from '../../lib/appConfig'
+import { countPendingReceived } from '../../lib/requests'
 
 export default function CarpoolHome() {
   const [params, setParams] = useSearchParams()
   const raw = params.get('direction')
   const direction: Direction = isDirection(raw) ? raw : 'commute-in'
   const company = useAppConfig()?.company
+
+  // 대기 중인 받은 신청 배지
+  const [pending, setPending] = useState(0)
+  useEffect(() => {
+    let alive = true
+    countPendingReceived().then((n) => alive && setPending(n))
+    return () => {
+      alive = false
+    }
+  }, [])
 
   const meta = DIRECTIONS[direction]
 
@@ -69,9 +81,14 @@ export default function CarpoolHome() {
       <div className="mt-6 grid grid-cols-2 gap-3">
         <Link
           to="/carpool/requests"
-          className="rounded-xl border border-slate-200 bg-white px-4 py-3.5 text-sm font-semibold text-slate-700 active:bg-slate-50"
+          className="flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-3.5 text-sm font-semibold text-slate-700 active:bg-slate-50"
         >
           신청함
+          {pending > 0 && (
+            <span className="grid h-5 min-w-5 place-items-center rounded-full bg-rose-500 px-1 text-[11px] font-bold text-white">
+              {pending}
+            </span>
+          )}
         </Link>
         <Link
           to="/carpool/calendar"
