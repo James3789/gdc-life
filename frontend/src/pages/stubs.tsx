@@ -3,22 +3,6 @@
 import AppShell from '../components/AppShell'
 import ComingSoon from '../components/ComingSoon'
 
-export function SearchPage() {
-  return (
-    <AppShell title="카풀 찾기" subtitle="탑승자" back>
-      <ComingSoon
-        phase="Phase 3"
-        items={[
-          '탑승 위치 / 목적지 + 희망 시간 입력',
-          '시간 허용 범위 ±10 / ±20 / ±30분',
-          '경로 반경 + 시간 근접도 스코어링',
-          '추천 리스트 · 지도 미리보기 · 카풀 신청',
-        ]}
-      />
-    </AppShell>
-  )
-}
-
 export function RequestsPage() {
   return (
     <AppShell title="신청함" subtitle="받은 신청 · 내 신청">

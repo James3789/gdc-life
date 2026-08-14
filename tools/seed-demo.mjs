@@ -45,7 +45,8 @@ const ACCOUNTS = [
 
 const supabase = createClient(URL_, KEY, { auth: { persistSession: false } })
 
-console.log('')
+// ── 계정 ──────────────────────────────────────────────────────
+console.log('\n▶ 계정')
 for (const acc of ACCOUNTS) {
   const { data: available } = await supabase.rpc('is_login_id_available', {
     p_login_id: acc.loginId,
@@ -74,8 +75,116 @@ for (const acc of ACCOUNTS) {
   else console.log(`  ✓ ${acc.loginId.padEnd(8)} ${acc.name} / ${acc.department}`)
 }
 
+// ── 샘플 카풀 ─────────────────────────────────────────────────
+const GDC = { lat: 35.50512, lng: 129.29956, addr: '울산광역시 남구 신두왕로 50' }
+const SAMSAN = { lat: 35.5384, lng: 129.3114, addr: '울산 남구 삼산동' }
+const TAEHWA = { lat: 35.558, lng: 129.302, addr: '울산 중구 태화동' }
+
+/** 다음 평일 5일 */
+function nextWeekdays(count) {
+  const dates = []
+  const cursor = new Date()
+  while (dates.length < count) {
+    cursor.setDate(cursor.getDate() + 1)
+    const day = cursor.getDay()
+    if (day !== 0 && day !== 6) {
+      const y = cursor.getFullYear()
+      const m = String(cursor.getMonth() + 1).padStart(2, '0')
+      const d = String(cursor.getDate()).padStart(2, '0')
+      dates.push(`${y}-${m}-${d}`)
+    }
+  }
+  return dates
+}
+
+/** 길찾기가 안 되면 직선 보간으로 대체한다 */
+function straightLine(from, to, n = 40) {
+  return Array.from({ length: n + 1 }, (_, i) => ({
+    lat: from.lat + ((to.lat - from.lat) * i) / n,
+    lng: from.lng + ((to.lng - from.lng) * i) / n,
+  }))
+}
+
+async function routeBetween(session, from, to) {
+  try {
+    const res = await fetch(`${URL_}/functions/v1/kakao-directions`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        apikey: KEY,
+        Authorization: `Bearer ${session.access_token}`,
+      },
+      body: JSON.stringify({ origin: from, destination: to, waypoints: [] }),
+    })
+    if (!res.ok) throw new Error(String(res.status))
+    const data = await res.json()
+    if (!Array.isArray(data.path) || data.path.length < 2) throw new Error('empty')
+    return { path: data.path, distanceM: data.distanceM, durationS: data.durationS, real: true }
+  } catch {
+    return { path: straightLine(from, to), distanceM: null, durationS: 900, real: false }
+  }
+}
+
+async function signIn(loginId) {
+  const c = createClient(URL_, KEY, { auth: { persistSession: false } })
+  const { data, error } = await c.auth.signInWithPassword({
+    email: `${loginId}@gdc-life.local`,
+    password: PASSWORD,
+  })
+  if (error) throw new Error(`${loginId} 로그인 실패: ${error.message}`)
+  return { client: c, session: data.session }
+}
+
+console.log('\n▶ 샘플 카풀')
+const dates = nextWeekdays(5)
+
+const PLANS = [
+  { loginId: 'driver1', direction: 'commute-in', time: '07:30', from: SAMSAN, to: GDC, seats: 3 },
+  { loginId: 'driver1', direction: 'commute-out', time: '18:00', from: GDC, to: SAMSAN, seats: 3 },
+  { loginId: 'driver2', direction: 'commute-in', time: '07:45', from: TAEHWA, to: GDC, seats: 2 },
+]
+
+for (const plan of PLANS) {
+  const { client, session } = await signIn(plan.loginId)
+
+  // 남의 카풀도 조회되므로 반드시 본인 것으로 좁혀야 한다
+  const { data: existing } = await client
+    .from('carpool_offers')
+    .select('id')
+    .eq('driver_id', session.user.id)
+    .eq('direction', plan.direction)
+    .eq('ride_date', dates[0])
+    .limit(1)
+
+  if (existing?.length) {
+    console.log(`  · ${plan.loginId} ${plan.direction} — 이미 있음, 건너뜀`)
+    continue
+  }
+
+  const route = await routeBetween(session, plan.from, plan.to)
+  const { data, error } = await client.rpc('create_carpool_offers', {
+    p_direction: plan.direction,
+    p_dates: dates,
+    p_depart_time: plan.time,
+    p_origin: plan.from,
+    p_dest: plan.to,
+    p_route: route.path,
+    p_route_distance_m: route.distanceM ?? undefined,
+    p_route_duration_s: route.durationS ?? undefined,
+    p_seats_total: plan.seats,
+  })
+
+  if (error) console.log(`  ✗ ${plan.loginId} ${plan.direction} 실패: ${error.message}`)
+  else
+    console.log(
+      `  ✓ ${plan.loginId} ${plan.direction} ${plan.time} ${plan.from.addr} → ${plan.to.addr}` +
+        ` (${data.length}일, ${route.real ? '실제 경로' : '직선 경로 — fn:serve 미실행'})`,
+    )
+}
+
 console.log(`
 ──────────────────────────────
   비밀번호는 모두  ${PASSWORD}
+  샘플 카풀 기간   ${dates[0]} ~ ${dates[dates.length - 1]}
 ──────────────────────────────
 `)

@@ -156,6 +156,102 @@ export type Database = {
           },
         ]
       }
+      carpool_requests: {
+        Row: {
+          board_addr: string
+          board_lat: number
+          board_lng: number
+          board_point: unknown
+          created_at: string
+          desired_time: string
+          id: string
+          offer_id: string
+          passenger_id: string
+          status: Database["public"]["Enums"]["request_status"]
+          time_tolerance: number
+        }
+        Insert: {
+          board_addr: string
+          board_lat: number
+          board_lng: number
+          board_point?: unknown
+          created_at?: string
+          desired_time: string
+          id?: string
+          offer_id: string
+          passenger_id: string
+          status?: Database["public"]["Enums"]["request_status"]
+          time_tolerance?: number
+        }
+        Update: {
+          board_addr?: string
+          board_lat?: number
+          board_lng?: number
+          board_point?: unknown
+          created_at?: string
+          desired_time?: string
+          id?: string
+          offer_id?: string
+          passenger_id?: string
+          status?: Database["public"]["Enums"]["request_status"]
+          time_tolerance?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "carpool_requests_offer_id_fkey"
+            columns: ["offer_id"]
+            isOneToOne: false
+            referencedRelation: "carpool_offers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "carpool_requests_passenger_id_fkey"
+            columns: ["passenger_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      driver_ratings: {
+        Row: {
+          driver_id: string
+          earned_at: string
+          id: string
+          offer_id: string
+          points: number
+        }
+        Insert: {
+          driver_id: string
+          earned_at?: string
+          id?: string
+          offer_id: string
+          points?: number
+        }
+        Update: {
+          driver_id?: string
+          earned_at?: string
+          id?: string
+          offer_id?: string
+          points?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "driver_ratings_driver_id_fkey"
+            columns: ["driver_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "driver_ratings_offer_id_fkey"
+            columns: ["offer_id"]
+            isOneToOne: true
+            referencedRelation: "carpool_offers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profile_private: {
         Row: {
           email: string
@@ -215,6 +311,28 @@ export type Database = {
         Args: { p_offer_id: string; p_whole_group?: boolean }
         Returns: number
       }
+      cancel_carpool_request: {
+        Args: { p_request_id: string }
+        Returns: {
+          board_addr: string
+          board_lat: number
+          board_lng: number
+          board_point: unknown
+          created_at: string
+          desired_time: string
+          id: string
+          offer_id: string
+          passenger_id: string
+          status: Database["public"]["Enums"]["request_status"]
+          time_tolerance: number
+        }
+        SetofOptions: {
+          from: "*"
+          to: "carpool_requests"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       create_carpool_offers: {
         Args: {
           p_dates: string[]
@@ -260,10 +378,77 @@ export type Database = {
         }
       }
       is_login_id_available: { Args: { p_login_id: string }; Returns: boolean }
+      request_carpool: {
+        Args: {
+          p_addr: string
+          p_desired_time: string
+          p_lat: number
+          p_lng: number
+          p_offer_id: string
+          p_tolerance?: number
+        }
+        Returns: {
+          board_addr: string
+          board_lat: number
+          board_lng: number
+          board_point: unknown
+          created_at: string
+          desired_time: string
+          id: string
+          offer_id: string
+          passenger_id: string
+          status: Database["public"]["Enums"]["request_status"]
+          time_tolerance: number
+        }
+        SetofOptions: {
+          from: "*"
+          to: "carpool_requests"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      search_carpool_offers: {
+        Args: {
+          p_date: string
+          p_desired_time: string
+          p_direction: Database["public"]["Enums"]["carpool_direction"]
+          p_lat: number
+          p_lng: number
+          p_radius_m?: number
+          p_tolerance_min?: number
+        }
+        Returns: {
+          already_requested: boolean
+          depart_time: string
+          dest_addr: string
+          dest_lat: number
+          dest_lng: number
+          detour_m: number
+          driver_department: string
+          driver_id: string
+          driver_name: string
+          driver_points: number
+          est_time: string
+          offer_id: string
+          origin_addr: string
+          origin_lat: number
+          origin_lng: number
+          ride_date: string
+          route_distance_m: number
+          route_duration_s: number
+          route_path: Json
+          score: number
+          seats_available: number
+          seats_total: number
+          time_diff_min: number
+          waypoints: Json
+        }[]
+      }
     }
     Enums: {
       carpool_direction: "commute-in" | "commute-out"
       offer_status: "open" | "full" | "done" | "cancelled"
+      request_status: "pending" | "accepted" | "rejected" | "cancelled" | "done"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -396,6 +581,7 @@ export const Constants = {
     Enums: {
       carpool_direction: ["commute-in", "commute-out"],
       offer_status: ["open", "full", "done", "cancelled"],
+      request_status: ["pending", "accepted", "rejected", "cancelled", "done"],
     },
   },
 } as const
