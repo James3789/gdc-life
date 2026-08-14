@@ -69,6 +69,8 @@ const TODAY = kstDate(kstNow)
 const TOMORROW = kstDate(new Date(kstNow.getTime() + 24 * 3600 * 1000))
 /** 지금부터 10분 뒤 출발 → 운행 시간대(출발 30분 전~) 안 */
 const SOON = kstTime(new Date(kstNow.getTime() + 10 * 60 * 1000))
+/** 2시간 전 출발 → 창(출발 1시간 후)이 이미 닫힘 */
+const LONG_PAST = kstTime(new Date(kstNow.getTime() - 2 * 3600 * 1000))
 
 const GDC = { lat: 35.50512, lng: 129.29956, addr: 'GDC' }
 const HOME = { lat: 35.5384, lng: 129.3114, addr: '삼산동' }
@@ -183,6 +185,19 @@ console.log('\n▶ can_share_location 판정')
     p_offer_id: future.id,
   })
   check('운행 시간대 밖(내일 건)은 허락됐어도 거부', tooEarly === false, String(tooEarly))
+
+  // 창은 출발 1시간 후에 닫힌다 — 2시간 전 출발 건은 이미 닫혀 있어야 한다
+  const past = await makeOffer(TODAY, LONG_PAST)
+  const { data: pastReq } = await waiting.client.rpc('request_carpool', {
+    p_offer_id: past.id,
+    p_lat: MID.lat, p_lng: MID.lng, p_addr: MID.addr,
+    p_desired_time: LONG_PAST, p_tolerance: 30,
+  })
+  await driver.client.rpc('accept_carpool_request', { p_request_id: pastReq.id })
+  const { data: tooLate } = await waiting.client.rpc('can_share_location', {
+    p_offer_id: past.id,
+  })
+  check(`출발 2시간 경과 건(${LONG_PAST})은 창이 닫힘`, tooLate === false, String(tooLate))
 }
 
 // ── 채널 접근 ★ 핵심 ──────────────────────────────────────────

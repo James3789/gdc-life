@@ -252,6 +252,16 @@ export default function CalendarPage() {
                 )}
               </div>
 
+              {/* 태운 사람이 있으면(좌석이 줄었으면) 운행 화면으로 갈 수 있다 */}
+              {offer.seatsAvailable < offer.seatsTotal && offer.status !== 'cancelled' && (
+                <Link
+                  to={`/carpool/trip/${offer.id}`}
+                  className="mt-3 block rounded-xl border border-brand-200 bg-brand-50 py-2.5 text-center text-[13px] font-semibold text-brand-700 active:bg-brand-100"
+                >
+                  운행 화면 (실시간 위치 · 전화)
+                </Link>
+              )}
+
               {(offer.status === 'open' || offer.status === 'full') && (
                 <div className="mt-3 flex gap-2">
                   {hasDeparted(offer.rideDate, offer.departTime) ? (

@@ -182,7 +182,7 @@ export default function TripPage() {
 
           {allowed === false && live.state === 'idle' && (
             <p className="mt-3 rounded-lg bg-slate-50 px-3 py-2.5 text-[12px] leading-relaxed text-slate-500">
-              지금은 위치를 공유할 수 없습니다. 위치 공유는 <strong>출발 30분 전부터 출발 3시간
+              지금은 위치를 공유할 수 없습니다. 위치 공유는 <strong>출발 30분 전부터 출발 1시간
               후까지</strong>, 매칭이 성립한 상대끼리만 가능합니다.
             </p>
           )}

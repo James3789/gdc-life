@@ -17,9 +17,14 @@ export const supabase: SupabaseClient<Database> = createClient<Database>(
   anonKey || 'public-anon-key-not-set',
   {
     auth: {
+      // 로그인 상태를 브라우저에 저장해 다음 방문에 자동 로그인시킨다.
       persistSession: true,
+      // 액세스 토큰이 만료돼도 리프레시 토큰으로 자동 갱신한다.
       autoRefreshToken: true,
       detectSessionInUrl: false,
+      // 저장 키를 고정한다. 기본값은 Supabase URL 에서 파생되기 때문에
+      // 주소가 바뀌면(예: localhost → LAN IP) 로그인이 풀려 버린다.
+      storageKey: 'gdc-life-auth',
     },
   },
 )

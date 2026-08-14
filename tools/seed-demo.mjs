@@ -29,8 +29,26 @@ if (!URL_ || !KEY) {
   process.exit(1)
 }
 
-if (!URL_.includes('127.0.0.1') && !URL_.includes('localhost')) {
-  console.error(`\n⚠ 로컬 스택이 아닙니다 (${URL_}). 데모 계정 생성을 중단합니다.\n`)
+// 로컬 스택에서만 실행한다. 모바일 테스트를 위해 LAN IP 를 쓰는 경우도 있으므로
+// 루프백과 사설 IP 대역까지 허용하고, 그 외(클라우드)는 막는다.
+function isLocalStack(url) {
+  let host
+  try {
+    host = new URL(url).hostname
+  } catch {
+    return false
+  }
+  if (host === 'localhost' || host === '127.0.0.1' || host === '::1') return true
+  // RFC1918 사설 대역
+  return (
+    /^10\./.test(host) ||
+    /^192\.168\./.test(host) ||
+    /^172\.(1[6-9]|2[0-9]|3[0-1])\./.test(host)
+  )
+}
+
+if (!isLocalStack(URL_)) {
+  console.error(`\n⚠ 로컬 스택이 아닙니다 (${URL_}). 데모 데이터 생성을 중단합니다.\n`)
   process.exit(1)
 }
 
@@ -271,12 +289,71 @@ console.log('\n▶ 완료된 운행 (별점)')
   }
 }
 
+// ── 운행 임박 (실시간 위치 테스트용) ──────────────────────────
+// 위치 공유는 '출발 30분 전 ~ 3시간 후' 에만 열리므로,
+// 지금 바로 눌러볼 수 있도록 10분 뒤 출발하는 매칭 건을 만든다.
+console.log('\n▶ 운행 임박 카풀 (실시간 위치 테스트용)')
+let liveOfferId = null
+{
+  const { client: driverClient, session: driverSession } = await signIn('driver1')
+  const { client: riderClient } = await signIn('rider1')
+
+  // KST 기준 오늘 날짜와 10분 뒤 시각
+  const kst = new Date(Date.now() + 9 * 3600 * 1000)
+  const today = kst.toISOString().slice(0, 10)
+  const soonDate = new Date(kst.getTime() + 10 * 60 * 1000)
+  const soon = `${String(soonDate.getUTCHours()).padStart(2, '0')}:${String(soonDate.getUTCMinutes()).padStart(2, '0')}`
+
+  const { data: already } = await driverClient
+    .from('carpool_offers')
+    .select('id')
+    .eq('driver_id', driverSession.user.id)
+    .eq('ride_date', today)
+    .limit(1)
+
+  if (already?.length) {
+    liveOfferId = already[0].id
+    console.log('  · 이미 있음, 건너뜀')
+  } else {
+    const route = await routeBetween(driverSession, SAMSAN, GDC)
+    const { data: offers, error } = await driverClient.rpc('create_carpool_offers', {
+      p_direction: 'commute-in',
+      p_dates: [today],
+      p_depart_time: soon,
+      p_origin: SAMSAN,
+      p_dest: GDC,
+      p_route: route.path,
+      p_route_distance_m: route.distanceM ?? undefined,
+      p_route_duration_s: route.durationS ?? undefined,
+      p_seats_total: 3,
+    })
+
+    if (error) {
+      console.log(`  ✗ 등록 실패: ${error.message}`)
+    } else {
+      const { data: req } = await riderClient.rpc('request_carpool', {
+        p_offer_id: offers[0].id,
+        p_lat: 35.5223,
+        p_lng: 129.3055,
+        p_addr: '울산 남구 달동',
+        p_desired_time: soon,
+        p_tolerance: 30,
+      })
+      await driverClient.rpc('accept_carpool_request', { p_request_id: req.id })
+      liveOfferId = offers[0].id
+      console.log(`  ✓ ${today} ${soon} 출발 · driver1 ↔ rider1 매칭 완료`)
+    }
+  }
+}
+
 console.log(`
 ──────────────────────────────
   비밀번호는 모두  ${PASSWORD}
   샘플 카풀 기간   ${dates[0]} ~ ${dates[dates.length - 1]}
 
-  driver1 로 로그인 → 신청함에 대기 건 1개
-                    → 내 정보에 별점 1점
+  driver1 → 신청함에 대기 건 1개, 내 정보에 별점 1점
+  실시간 위치 테스트 (지금 바로 가능):
+    ${liveOfferId ? `http://localhost:5173/carpool/trip/${liveOfferId}` : '(생성 실패)'}
+    driver1 과 rider1 로 각각 열고 [시작] 을 누르면 서로의 위치가 보입니다.
 ──────────────────────────────
 `)
