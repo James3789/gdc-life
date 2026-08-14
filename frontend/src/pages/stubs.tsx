@@ -3,23 +3,6 @@
 import AppShell from '../components/AppShell'
 import ComingSoon from '../components/ComingSoon'
 
-export function OfferNewPage() {
-  return (
-    <AppShell title="카풀 등록" subtitle="봉사자" back>
-      <ComingSoon
-        phase="Phase 2"
-        items={[
-          '출근/퇴근 · 날짜 · 시간 선택',
-          'Kakao 지도 주소검색 · 지도 클릭 · 현재위치',
-          '경유지 추가, 좌석 1~4석(기본 3)',
-          '길찾기 경로 폴리라인 표시 및 저장',
-          '요일 반복 등록',
-        ]}
-      />
-    </AppShell>
-  )
-}
-
 export function SearchPage() {
   return (
     <AppShell title="카풀 찾기" subtitle="탑승자" back>
@@ -46,17 +29,6 @@ export function RequestsPage() {
           '좌석 차감 및 마감 처리',
           '허락된 상대에게만 전화번호 공개',
         ]}
-      />
-    </AppShell>
-  )
-}
-
-export function CalendarPage() {
-  return (
-    <AppShell title="내 카풀 달력" subtitle="등록 현황">
-      <ComingSoon
-        phase="Phase 2 · 7"
-        items={['월간 캘린더로 등록 카풀 확인', '반복 그룹 단위 수정 / 취소']}
       />
     </AppShell>
   )

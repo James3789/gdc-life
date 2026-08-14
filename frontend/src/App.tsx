@@ -5,15 +5,10 @@ import HomePage from './pages/HomePage'
 import ProfilePage from './pages/ProfilePage'
 import LoginPage from './pages/auth/LoginPage'
 import SignupPage from './pages/auth/SignupPage'
+import CalendarPage from './pages/carpool/CalendarPage'
 import CarpoolHome from './pages/carpool/CarpoolHome'
-import {
-  CalendarPage,
-  NotFoundPage,
-  OfferNewPage,
-  RequestsPage,
-  SearchPage,
-  TripPage,
-} from './pages/stubs'
+import OfferNewPage from './pages/carpool/OfferNewPage'
+import { NotFoundPage, RequestsPage, SearchPage, TripPage } from './pages/stubs'
 
 export default function App() {
   return (

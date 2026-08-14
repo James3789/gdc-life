@@ -147,5 +147,36 @@ console.log('\n▶ 잘못된 입력')
   check('경유지 31개 거부', tooMany.status === 400, `HTTP ${tooMany.status}`)
 }
 
+// ── 실제 경로로 카풀 등록까지 (Phase 2 통합) ──────────────────
+console.log('\n▶ 실제 경로로 카풀 등록')
+{
+  const route = await (await invoke({ origin: HOME, destination: GDC, waypoints: [VIA] })).json()
+
+  const { data, error } = await client.rpc('create_carpool_offers', {
+    p_direction: 'commute-in',
+    p_dates: ['2026-10-05'],
+    p_depart_time: '07:20',
+    p_origin: { ...HOME, addr: '울산 남구 삼산동' },
+    p_dest: { ...GDC, addr: '울산광역시 남구 신두왕로 50' },
+    p_waypoints: [{ ...VIA, addr: '울산 남구 달동' }],
+    p_route: route.path,
+    p_route_distance_m: route.distanceM,
+    p_route_duration_s: route.durationS,
+    p_seats_total: 3,
+  })
+
+  check('길찾기 결과로 등록 성공', !error && data?.length === 1, error?.message)
+  const offer = data?.[0]
+  check('경로 LineString 저장', Boolean(offer?.route), 'route 가 null')
+  check('거리·시간이 그대로 저장', offer?.route_distance_m === route.distanceM)
+  // WKB 는 점당 16바이트(32 hex) — 좌표 수에 비례해야 한다
+  const hexLen = String(offer?.route ?? '').length
+  check(
+    `좌표 ${route.path.length}개가 모두 저장됨`,
+    hexLen >= route.path.length * 32,
+    `WKB ${hexLen}자`,
+  )
+}
+
 console.log(`\n${fail === 0 ? '✅' : '❌'}  통과 ${pass} / 실패 ${fail}\n`)
 process.exit(fail === 0 ? 0 : 1)

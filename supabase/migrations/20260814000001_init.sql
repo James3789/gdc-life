@@ -33,9 +33,9 @@ values (
   1,
   'HD현대마린솔루션 글로벌디지털센터',
   '울산광역시 남구 신두왕로 50',
-  -- ⚠ 신두왕로 도로 기준 근사 좌표. `npm run geocode` 로 정확한 값을 얻어 교체할 것.
-  35.51809,
-  129.28832
+  -- 카카오 장소검색 기준 실제 건물 좌표 (`npm run geocode` 로 재확인 가능)
+  35.50512033,
+  129.29956197
 );
 
 alter table public.app_settings enable row level security;

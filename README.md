@@ -14,6 +14,10 @@ npm run db:start     # 로컬 Supabase 스택 (Docker 필요) — 출력된 URL/
 npm run dev          # http://localhost:5173
 ```
 
+> **경로 계산을 쓰려면 터미널 하나를 더 열어 `npm run fn:serve` 를 실행해야 한다.**
+> 카카오 길찾기는 Edge Function 을 거치는데, 로컬에서는 이 명령이 떠 있을 때만 동작한다.
+> (배포 환경에서는 `npm run fn:deploy` 한 번이면 상시 동작)
+
 클라우드 프로젝트를 쓸 경우 `db:start` 대신:
 
 ```bash
@@ -116,11 +120,12 @@ Flask + VPS 조합은 월 $5~10이 들고 무료 티어는 콜드스타트가 �
 |---|---|
 | `company_name` | HD현대마린솔루션 글로벌디지털센터 |
 | `company_addr` | 울산광역시 남구 신두왕로 50 |
-| `company_lat` / `company_lng` | 35.51809 / 129.28832 ⚠ **도로 기준 근사값** |
+| `company_lat` / `company_lng` | 35.50512033 / 129.29956197 (카카오 장소검색 기준) |
 | `match_radius_m` | 1000 |
 | `match_default_tolerance_min` | 10 |
 
-정확한 건물 좌표는 `npm run geocode` 로 얻어 반영한다 (`KAKAO_REST_KEY` 필요).
+좌표를 다시 확인하려면 `npm run geocode` (`KAKAO_REST_KEY` 필요).
+값을 바꾼 뒤에는 `supabase/migrations/*_init.sql` 의 시드도 함께 고쳐야 새 환경에 반영된다.
 
 ### Supabase 프로젝트 설정 (클라우드)
 
@@ -231,7 +236,8 @@ anon 키도 유효한 JWT 이고 프론트 번들에 그대로 실려 나가므�
 - [x] **Phase 0.5** — Supabase 전환: 스키마 · RLS · Edge Function · RLS 테스트
 - [x] **Phase 1** — 인증: 회원가입 / ID 로그인 / 프로필 · 라우트 보호
       (비밀번호 재설정은 미구현 — 아래 *한계* 참고)
-- [ ] **Phase 2** — 봉사자 카풀 등록 (지도 · 경유지 · 좌석 · 반복 · 달력)
+- [x] **Phase 2** — 봉사자 카풀 등록 (지도 · 주소검색 · 경유지 · 좌석 · 경로 · 반복 · 달력)
+      (등록 후 세부 수정은 미지원 — 취소 후 재등록. 좌석 정합성 때문에 Phase 4 이후로 미룸)
 - [ ] **Phase 3** — 탑승자 검색 · 매칭 추천 · 신청
 - [ ] **Phase 4** — 신청 허락/거절 · 좌석 차감 · 연락처 개방
 - [ ] **Phase 5** — 실시간 위치 공유 · 전화
