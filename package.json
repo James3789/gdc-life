@@ -1,0 +1,13 @@
+{
+  "name": "gdc-life",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "HD현대마린솔루션 GDC 임직원 전용 사내 플랫폼 (카풀 매칭)",
+  "scripts": {
+    "setup": "node tools/setup.mjs",
+    "dev": "node tools/dev.mjs",
+    "build": "npm --prefix frontend run build",
+    "typecheck": "npm --prefix frontend run typecheck"
+  }
+}

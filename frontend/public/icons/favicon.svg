@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="GDC Life">
+  <rect width="512" height="512" rx="113" fill="#0b7285"/>
+  <path d="M160 372h72l56-72v-88l64-52"
+        fill="none" stroke="#fff" stroke-width="34"
+        stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="160" cy="372" r="46" fill="#0b7285" stroke="#fff" stroke-width="30"/>
+  <circle cx="352" cy="160" r="46" fill="#0b7285" stroke="#fff" stroke-width="30"/>
+</svg>

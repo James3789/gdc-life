@@ -1,0 +1,54 @@
+@import 'tailwindcss';
+
+/* ── 디자인 토큰 ───────────────────────────────────── */
+@theme {
+  --color-brand-50: #eff9fb;
+  --color-brand-100: #d2eff4;
+  --color-brand-200: #a6dfe9;
+  --color-brand-300: #6ec7d9;
+  --color-brand-400: #37a9c2;
+  --color-brand-500: #1a8ca5;
+  --color-brand-600: #0b7285;
+  --color-brand-700: #0c5c6b;
+  --color-brand-800: #0e4b57;
+  --color-brand-900: #103f4a;
+
+  --font-sans:
+    'Pretendard Variable', Pretendard, -apple-system, BlinkMacSystemFont, 'Apple SD Gothic Neo',
+    'Malgun Gothic', 'Segoe UI', system-ui, sans-serif;
+}
+
+/* ── 전역 ──────────────────────────────────────────── */
+@layer base {
+  html {
+    /* 모바일에서 가로 스크롤 방지 + 폰트 자동확대 방지 */
+    -webkit-text-size-adjust: 100%;
+    overflow-x: hidden;
+  }
+
+  body {
+    @apply bg-slate-100 font-sans text-slate-900 antialiased;
+    overscroll-behavior-y: none;
+  }
+
+  /* 탭 하이라이트 제거 (앱처럼 보이게) */
+  button,
+  a {
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  /* iOS 입력 확대 방지: 16px 미만 금지 */
+  input,
+  select,
+  textarea {
+    font-size: 16px;
+  }
+}
+
+@utility safe-bottom {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+@utility safe-top {
+  padding-top: env(safe-area-inset-top, 0px);
+}

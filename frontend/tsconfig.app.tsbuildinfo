@@ -1,0 +1,1 @@
+{"root":["./src/app.tsx","./src/main.tsx","./src/components/appshell.tsx","./src/components/bottomtabbar.tsx","./src/components/comingsoon.tsx","./src/components/icons.tsx","./src/lib/api.ts","./src/lib/appconfig.tsx","./src/lib/direction.ts","./src/modules/registry.tsx","./src/pages/homepage.tsx","./src/pages/stubs.tsx","./src/pages/carpool/carpoolhome.tsx"],"version":"5.9.3"}
