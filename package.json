@@ -19,7 +19,7 @@
     "fn:deploy": "supabase functions deploy kakao-directions",
     "geocode": "node tools/geocode-company.mjs",
     "seed": "node tools/seed-demo.mjs",
-    "test": "node tools/test-rls.mjs && node tools/test-auth.mjs && node tools/test-session.mjs && node tools/test-offers.mjs && node tools/test-search.mjs && node tools/test-matching.mjs && node tools/test-location.mjs && node tools/test-ratings.mjs",
+    "test": "node tools/test-rls.mjs && node tools/test-auth.mjs && node tools/test-session.mjs && node tools/test-offers.mjs && node tools/test-search.mjs && node tools/test-matching.mjs && node tools/test-location.mjs && node tools/test-ratings.mjs && node tools/test-admin.mjs",
     "test:rls": "node tools/test-rls.mjs",
     "test:auth": "node tools/test-auth.mjs",
     "test:session": "node tools/test-session.mjs",
@@ -28,6 +28,7 @@
     "test:matching": "node tools/test-matching.mjs",
     "test:location": "node tools/test-location.mjs",
     "test:ratings": "node tools/test-ratings.mjs",
+    "test:admin": "node tools/test-admin.mjs",
     "test:directions": "node tools/test-directions.mjs"
   },
   "devDependencies": {

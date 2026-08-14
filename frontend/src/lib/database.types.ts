@@ -34,6 +34,39 @@ export type Database = {
   }
   public: {
     Tables: {
+      admin_users: {
+        Row: {
+          granted_at: string
+          note: string | null
+          user_id: string
+        }
+        Insert: {
+          granted_at?: string
+          note?: string | null
+          user_id: string
+        }
+        Update: {
+          granted_at?: string
+          note?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "admin_users_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "matched_contacts"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "admin_users_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       app_settings: {
         Row: {
           company_addr: string
@@ -375,6 +408,33 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      admin_list_accounts: {
+        Args: { p_query?: string }
+        Returns: {
+          created_at: string
+          department: string
+          email: string
+          is_admin: boolean
+          login_id: string
+          name: string
+          offers: number
+          phone_masked: string
+          points: number
+          rides: number
+          user_id: string
+        }[]
+      }
+      admin_stats: {
+        Args: never
+        Returns: {
+          completed: number
+          matched: number
+          offers: number
+          points: number
+          requests: number
+          users: number
+        }[]
+      }
       auto_complete_due_offers: { Args: never; Returns: number }
       can_share_location: { Args: { p_offer_id: string }; Returns: boolean }
       can_use_trip_channel: { Args: { p_topic: string }; Returns: boolean }
@@ -481,7 +541,17 @@ export type Database = {
           isSetofReturn: true
         }
       }
+      is_admin: { Args: never; Returns: boolean }
       is_login_id_available: { Args: { p_login_id: string }; Returns: boolean }
+      my_rating_rank: {
+        Args: { p_period?: string }
+        Returns: {
+          points: number
+          rank: number
+          rides: number
+          total_drivers: number
+        }[]
+      }
       my_rating_summary: {
         Args: never
         Returns: {
@@ -492,6 +562,18 @@ export type Database = {
         }[]
       }
       offer_route_path: { Args: { p_offer_id: string }; Returns: Json }
+      rating_leaderboard: {
+        Args: { p_limit?: number; p_period?: string }
+        Returns: {
+          department: string
+          is_me: boolean
+          name: string
+          points: number
+          rank: number
+          rides: number
+          user_id: string
+        }[]
+      }
       reject_carpool_request: {
         Args: { p_request_id: string }
         Returns: {

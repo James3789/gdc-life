@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 
 import AppShell from '../components/AppShell'
 import { Alert, Button } from '../components/ui'
+import { checkIsAdmin } from '../lib/admin'
 import { useAuth } from '../lib/auth'
 import { formatDateKo } from '../lib/dates'
 import { DIRECTIONS } from '../lib/direction'
@@ -37,15 +38,17 @@ export default function ProfilePage() {
   const [busy, setBusy] = useState(false)
   const [summary, setSummary] = useState<RatingSummary | null>(null)
   const [history, setHistory] = useState<RatingEntry[]>([])
+  const [isAdmin, setIsAdmin] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     let alive = true
-    Promise.all([getMyRatingSummary(), listMyRatings()])
-      .then(([s, h]) => {
+    Promise.all([getMyRatingSummary(), listMyRatings(), checkIsAdmin()])
+      .then(([s, h, admin]) => {
         if (!alive) return
         setSummary(s)
         setHistory(h)
+        setIsAdmin(admin)
       })
       .catch((err: Error) => alive && setError(err.message))
     return () => {
@@ -84,7 +87,12 @@ export default function ProfilePage() {
       </p>
 
       {/* 별점 */}
-      <h3 className="mt-6 mb-2 px-1 text-sm font-semibold text-slate-500">봉사 별점</h3>
+      <div className="mt-6 mb-2 flex items-center justify-between px-1">
+        <h3 className="text-sm font-semibold text-slate-500">봉사 별점</h3>
+        <Link to="/carpool/ranking" className="text-[13px] font-semibold text-brand-700">
+          전체 순위 →
+        </Link>
+      </div>
       {error && <Alert tone="error">{error}</Alert>}
 
       <div className="grid grid-cols-3 gap-2 rounded-2xl border border-slate-200 bg-slate-50 p-2">
@@ -132,7 +140,17 @@ export default function ProfilePage() {
         </ul>
       )}
 
-      <Button variant="secondary" full loading={busy} onClick={handleSignOut} className="mt-6">
+      {/* 관리자에게만 보인다 */}
+      {isAdmin && (
+        <Link
+          to="/admin"
+          className="mt-6 block rounded-xl border border-slate-300 bg-white py-3.5 text-center text-[14px] font-semibold text-slate-700 active:bg-slate-50"
+        >
+          🛠 관리자 — 가입 계정 확인
+        </Link>
+      )}
+
+      <Button variant="secondary" full loading={busy} onClick={handleSignOut} className="mt-3">
         로그아웃
       </Button>
     </AppShell>

@@ -33,6 +33,7 @@ npm run seed
 | `driver2` | 박운전 / 디지털솔루션팀 |
 | `rider1` | 이탑승 / 기술연구소 |
 | `rider2` | 최동승 / 경영지원팀 |
+| `admin` | 관리자 / 운영 — `/admin` 접근 가능 |
 
 비밀번호는 모두 `gdclife1234`. 로컬 스택이 아니면 스크립트가 실행을 거부한다.
 
@@ -134,6 +135,7 @@ Flask + VPS 조합은 월 $5~10이 들고 무료 티어는 콜드스타트가 �
 | `npm run test:matching` | 좌석 동시성·연락처 공개 범위 검증 |
 | `npm run test:location` | 실시간 위치 채널 접근 통제 검증 |
 | `npm run test:ratings` | 운행완료·별점 적립 검증 |
+| `npm run test:admin` | 별점 순위·관리자 권한 검증 |
 | `npm run test:directions` | 길찾기 Edge Function 검증 (`fn:serve` 실행 중이어야 함) |
 | `npm run fn:deploy` | 카카오 길찾기 Edge Function 배포 |
 | `npm run geocode` | 주소를 좌표로 변환 |
@@ -288,6 +290,31 @@ select cron.schedule(
 
 > 로컬 스택에는 일부러 넣지 않았다. 백그라운드 작업이 테스트 중 카풀을 완료시켜 결과가 흔들린다.
 
+### 관리자
+
+가입 계정을 확인하는 최소 기능이다. 화면은 `/admin`, 프로필 하단에 관리자에게만 링크가 보인다.
+
+| 보이는 것 | 보이지 않는 것 |
+|---|---|
+| ID · 이름 · 부서 · 이메일 · 가입일 | **전화번호 원본** |
+| 등록/운행/별점 수, 전체 운영 통계 | 신청 상세, 위치 |
+
+전화번호는 서버에서 `010-****-1234` 로 마스킹해 내보낸다. **관리자에게도 원본은 가지 않는다.**
+원본이 필요하다면 `admin_list_accounts` 의 `regexp_replace` 를 `pp.phone` 으로 바꾸면 되지만,
+가입 확인 용도에는 필요하지 않다고 보고 마스킹을 기본값으로 두었다.
+
+**권한 부여 경로는 UI 에 없다.** 스스로 관리자가 되는 길을 막기 위해 `admin_users` 테이블에는
+클라이언트 권한을 하나도 주지 않았다. 대시보드 SQL 에디터에서 넣는다:
+
+```sql
+insert into public.admin_users (user_id, note)
+select id, '운영 담당자' from public.profile_private where login_id = '<사번ID>'
+on conflict (user_id) do nothing;
+```
+
+> `service_role` 도 명시적으로 GRANT 한 테이블에만 접근할 수 있다(`admin_users` 뿐).
+> 다른 테이블을 백엔드에서 다뤄야 하면 GRANT 를 추가해야 한다.
+
 ### 좌석 동시성
 
 여러 탑승자를 동시에 허락해도 좌석이 초과되지 않아야 한다.
@@ -317,7 +344,9 @@ anon 키도 유효한 JWT 이고 프론트 번들에 그대로 실려 나가므�
 | `/carpool/calendar` | 봉사자 달력 |
 | `/carpool/requests` | 신청함 (허락/거절 · 내 신청) |
 | `/carpool/trip/:id` | 매칭 상세 (실시간 위치 · 전화) |
+| `/carpool/ranking` | 봉사 별점 순위 (이번 달 / 올해 / 누적) |
 | `/profile` | 내 정보 · 별점 |
+| `/admin` | 관리자 — 가입 계정 확인 (관리자만) |
 
 하단 탭바: 홈 · 카풀 · 달력 · 내정보
 

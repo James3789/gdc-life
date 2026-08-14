@@ -1,6 +1,7 @@
 import { Navigate, Outlet, Route, Routes } from 'react-router-dom'
 
 import { RedirectIfAuthed, RequireAuth } from './components/RequireAuth'
+import AdminPage from './pages/AdminPage'
 import HomePage from './pages/HomePage'
 import ProfilePage from './pages/ProfilePage'
 import LoginPage from './pages/auth/LoginPage'
@@ -8,6 +9,7 @@ import SignupPage from './pages/auth/SignupPage'
 import CalendarPage from './pages/carpool/CalendarPage'
 import CarpoolHome from './pages/carpool/CarpoolHome'
 import OfferNewPage from './pages/carpool/OfferNewPage'
+import RankingPage from './pages/carpool/RankingPage'
 import RequestsPage from './pages/carpool/RequestsPage'
 import SearchPage from './pages/carpool/SearchPage'
 import TripPage from './pages/carpool/TripPage'
@@ -51,7 +53,9 @@ export default function App() {
         <Route path="/carpool/calendar" element={<CalendarPage />} />
         <Route path="/carpool/requests" element={<RequestsPage />} />
         <Route path="/carpool/trip/:id" element={<TripPage />} />
+        <Route path="/carpool/ranking" element={<RankingPage />} />
         <Route path="/profile" element={<ProfilePage />} />
+        <Route path="/admin" element={<AdminPage />} />
       </Route>
 
       <Route path="*" element={<NotFoundPage />} />

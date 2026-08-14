@@ -92,11 +92,19 @@ export default function CarpoolHome() {
         </Link>
         <Link
           to="/carpool/calendar"
-          className="rounded-xl border border-slate-200 bg-white px-4 py-3.5 text-sm font-semibold text-slate-700 active:bg-slate-50"
+          className="rounded-xl border border-slate-200 bg-white px-4 py-3.5 text-center text-sm font-semibold text-slate-700 active:bg-slate-50"
         >
           내 카풀 달력
         </Link>
       </div>
+
+      <Link
+        to="/carpool/ranking"
+        className="mt-3 flex items-center justify-between rounded-xl border border-slate-200 bg-white px-4 py-3.5 active:bg-slate-50"
+      >
+        <span className="text-sm font-semibold text-slate-700">🏆 봉사 별점 순위</span>
+        <ChevronRightIcon className="h-5 w-5 text-slate-300" />
+      </Link>
     </AppShell>
   )
 }

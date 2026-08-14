@@ -59,7 +59,10 @@ const ACCOUNTS = [
   { loginId: 'driver2', name: '박운전', department: '디지털솔루션팀', phone: '010-2222-2222' },
   { loginId: 'rider1', name: '이탑승', department: '기술연구소', phone: '010-3333-3333' },
   { loginId: 'rider2', name: '최동승', department: '경영지원팀', phone: '010-4444-4444' },
+  { loginId: 'admin', name: '관리자', department: '운영', phone: '010-9999-9999' },
 ]
+
+const SERVICE_KEY = env('SUPABASE_SERVICE_ROLE_KEY')
 
 const supabase = createClient(URL_, KEY, { auth: { persistSession: false } })
 
@@ -91,6 +94,30 @@ for (const acc of ACCOUNTS) {
 
   if (error) console.log(`  ✗ ${acc.loginId.padEnd(8)} 실패: ${error.message}`)
   else console.log(`  ✓ ${acc.loginId.padEnd(8)} ${acc.name} / ${acc.department}`)
+}
+
+// ── 관리자 권한 부여 ──────────────────────────────────────────
+// 권한 부여 경로는 UI 에 없다. service_role 로만 넣는다.
+console.log('\n▶ 관리자 권한')
+if (!SERVICE_KEY) {
+  console.log('  · SUPABASE_SERVICE_ROLE_KEY 없음 — 아래 SQL 을 직접 실행하세요:')
+  console.log("      insert into public.admin_users (user_id, note)")
+  console.log("      select id, '최초 관리자' from public.profile_private where login_id = 'admin'")
+  console.log('      on conflict do nothing;')
+} else {
+  // service_role 에는 profile_private 조회 권한이 없다(의도적).
+  // admin 계정으로 직접 로그인해 user id 를 얻고, 권한 삽입에만 service_role 을 쓴다.
+  try {
+    const { session } = await signIn('admin')
+    const admin = createClient(URL_, SERVICE_KEY, { auth: { persistSession: false } })
+    const { error } = await admin
+      .from('admin_users')
+      .upsert({ user_id: session.user.id, note: '데모 관리자' }, { onConflict: 'user_id' })
+    if (error) console.log(`  ✗ 권한 부여 실패: ${error.message}`)
+    else console.log('  ✓ admin 계정에 관리자 권한 부여')
+  } catch (err) {
+    console.log(`  ✗ ${err.message}`)
+  }
 }
 
 // ── 샘플 카풀 ─────────────────────────────────────────────────
