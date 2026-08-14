@@ -208,6 +208,12 @@ if (!SERVICE_KEY) {
       .eq('id', alice.id)
     check('관리자도 profile_private 직접 조회는 불가', (direct?.length ?? 0) === 0, `${direct?.length}건`)
   }
+
+  // 테스트가 만든 관리자 권한은 되돌린다.
+  // 남겨두면 npm run purge 의 '관리자는 항상 보존' 규칙에 걸려 계정이 쌓인다.
+  await admin.from('admin_users').delete().eq('user_id', boss.id)
+  const { data: stillAdmin } = await boss.client.rpc('is_admin')
+  check('테스트가 부여한 관리자 권한 회수', stillAdmin === false, String(stillAdmin))
 }
 
 console.log(`\n${fail === 0 ? '✅' : '❌'}  통과 ${pass} / 실패 ${fail}\n`)

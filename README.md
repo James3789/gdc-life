@@ -139,7 +139,8 @@ Flask + VPS 조합은 월 $5~10이 들고 무료 티어는 콜드스타트가 �
 | `npm run test:directions` | 길찾기 Edge Function 검증 (`fn:serve` 실행 중이어야 함) |
 | `npm run fn:deploy` | 카카오 길찾기 Edge Function 배포 |
 | `npm run geocode` | 주소를 좌표로 변환 |
-| `npm run seed` | 로컬 테스트용 데모 계정 생성 (로컬 스택에서만 동작) |
+| `npm run seed` | 로컬 테스트용 데모 계정·데이터 생성 (로컬 스택에서만 동작) |
+| `npm run purge` | 계정 정리 — 관리자 외 삭제 (기본은 미리보기) |
 
 ---
 
@@ -367,6 +368,38 @@ anon 키도 유효한 JWT 이고 프론트 번들에 그대로 실려 나가므�
 - [ ] **Phase 7** — 알림 · 반응형 QA · 마감
 
 ---
+
+## 테스트 계정 정리 (오픈 전)
+
+개발·테스트 중 만들어진 계정을 지우고 관리자만 남길 때 쓴다.
+
+```bash
+npm run purge                              # 미리보기 — 아무것도 지우지 않는다
+npm run purge -- --keep=driver1,rider1     # 추가로 남길 계정 (사내 ID)
+npm run purge -- --yes                     # 실제 삭제
+```
+
+- **관리자(`admin_users`)는 옵션과 무관하게 항상 보존**된다.
+- `SUPABASE_SERVICE_ROLE_KEY` 가 필요하다 (클라우드는 Dashboard → Project Settings → API).
+- 로컬이 아닌 프로젝트를 대상으로 하면 `DELETE` 를 직접 입력해야 진행된다.
+
+계정을 지우면 **딸린 데이터가 모두 함께 사라진다** (`ON DELETE CASCADE`):
+
+```
+auth.users
+  └ profiles
+      ├ profile_private          (연락처)
+      ├ carpool_offers           (등록한 카풀)
+      │    ├ carpool_requests    (그 카풀에 들어온 신청)
+      │    └ driver_ratings      (그 운행의 별점)
+      ├ carpool_requests         (내가 낸 신청)
+      └ admin_users              (관리자 권한)
+```
+
+> 되돌릴 수 없다. 운영 프로젝트라면 Dashboard → Database → Backups 로 백업을 먼저 확인할 것.
+
+대시보드에서 몇 개만 지울 때는 **Authentication → Users** 에서 직접 삭제해도 결과는 같다.
+`auth.users` 를 SQL 로 직접 지우는 방법은 Supabase 가 auth 스키마 쓰기를 제한하고 있어 권장하지 않는다.
 
 ## 배포
 

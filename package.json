@@ -19,6 +19,7 @@
     "fn:deploy": "supabase functions deploy kakao-directions",
     "geocode": "node tools/geocode-company.mjs",
     "seed": "node tools/seed-demo.mjs",
+    "purge": "node tools/purge-accounts.mjs",
     "test": "node tools/test-rls.mjs && node tools/test-auth.mjs && node tools/test-session.mjs && node tools/test-offers.mjs && node tools/test-search.mjs && node tools/test-matching.mjs && node tools/test-location.mjs && node tools/test-ratings.mjs && node tools/test-admin.mjs",
     "test:rls": "node tools/test-rls.mjs",
     "test:auth": "node tools/test-auth.mjs",
