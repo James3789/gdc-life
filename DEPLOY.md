@@ -60,7 +60,7 @@ Cloudflare Pages ──── 정적 파일 (frontend/dist)
 ```bash
 npx supabase login                       # 브라우저가 열림
 npx supabase link --project-ref <ref>    # DB 비밀번호 입력
-npm run db:push                          # 마이그레이션 8개 적용
+npm run db:push                          # 마이그레이션 9개 적용
 npx supabase secrets set KAKAO_REST_KEY=<REST 키>
 npm run fn:deploy                        # 길찾기 함수 배포
 ```
@@ -155,8 +155,10 @@ npm run preflight
 | 지도 | 카풀 등록에서 지도가 뜨는지 (안 뜨면 도메인 미등록) |
 | 경로 계산 | 출발지 지정 시 예상 거리·시간이 나오는지 (안 나오면 Edge Function 또는 시크릿 문제) |
 | **위치 기능** | HTTPS 라 모바일에서도 현재위치·실시간 위치가 동작 |
+| **알림** | 계정 두 개로 신청/허락 → 헤더 종에 배지가 **즉시** 붙는지 (안 붙으면 Realtime 확인) |
 | 새로고침 | `/carpool/search` 에서 F5 → 404 안 나는지 |
 | PWA | 모바일 브라우저에서 "홈 화면에 추가" |
+| 화면 | 작은 폰(폭 320px)·태블릿에서 가로 스크롤이 생기지 않는지 |
 
 ## 8. 오픈 전 테스트 계정 정리
 
@@ -181,18 +183,41 @@ npm run db:push      # 마이그레이션 적용
 npm run fn:deploy    # Edge Function 을 고쳤을 때만
 ```
 
-## 선택 — 운행완료 자동 처리
+## 선택 — 자동 처리 (pg_cron)
 
-봉사자가 [운행완료] 를 누르지 않아도 별점이 쌓이게 하려면,
 대시보드 SQL Editor 에서 한 번 실행한다.
 
 ```sql
 create extension if not exists pg_cron;
+
+-- 봉사자가 [운행완료] 를 누르지 않아도 별점이 쌓이게
 select cron.schedule(
   'gdc-life-auto-complete', '0 * * * *',
   $$ select public.auto_complete_due_offers(); $$
 );
+
+-- 60일 지난 알림 정리 (안 걸어도 동작에는 지장 없다)
+select cron.schedule(
+  'gdc-life-purge-notifications', '30 4 * * *',
+  $$ select public.purge_old_notifications(); $$
+);
 ```
+
+## 알림이 실시간으로 안 뜬다면
+
+알림 자체는 DB 트리거가 만들므로 화면을 새로 고치면 항상 보인다.
+**배지가 즉시 갱신되지 않는다면** Realtime 발행 설정을 본다.
+
+```sql
+-- 목록에 public.notifications 가 있어야 한다
+select * from pg_publication_tables where pubname = 'supabase_realtime';
+
+-- 없다면
+alter publication supabase_realtime add table public.notifications;
+```
+
+> 마이그레이션이 자동으로 등록하지만, 프로젝트에 따라 발행 이름이 다를 수 있다.
+> 대시보드에서는 **Database → Replication** 에서도 확인된다.
 
 ---
 

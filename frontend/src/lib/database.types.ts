@@ -306,6 +306,81 @@ export type Database = {
           },
         ]
       }
+      notifications: {
+        Row: {
+          body: string
+          created_at: string
+          id: string
+          kind: Database["public"]["Enums"]["notification_kind"]
+          link: string | null
+          offer_id: string | null
+          read_at: string | null
+          request_id: string | null
+          title: string
+          user_id: string
+        }
+        Insert: {
+          body: string
+          created_at?: string
+          id?: string
+          kind: Database["public"]["Enums"]["notification_kind"]
+          link?: string | null
+          offer_id?: string | null
+          read_at?: string | null
+          request_id?: string | null
+          title: string
+          user_id: string
+        }
+        Update: {
+          body?: string
+          created_at?: string
+          id?: string
+          kind?: Database["public"]["Enums"]["notification_kind"]
+          link?: string | null
+          offer_id?: string | null
+          read_at?: string | null
+          request_id?: string | null
+          title?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notifications_offer_id_fkey"
+            columns: ["offer_id"]
+            isOneToOne: false
+            referencedRelation: "carpool_offers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notifications_request_id_fkey"
+            columns: ["request_id"]
+            isOneToOne: false
+            referencedRelation: "carpool_requests"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notifications_request_id_fkey"
+            columns: ["request_id"]
+            isOneToOne: false
+            referencedRelation: "matched_contacts"
+            referencedColumns: ["request_id"]
+          },
+          {
+            foreignKeyName: "notifications_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "matched_contacts"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "notifications_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profile_private: {
         Row: {
           email: string
@@ -541,6 +616,10 @@ export type Database = {
           isSetofReturn: true
         }
       }
+      format_ride_when: {
+        Args: { p_date: string; p_time: string }
+        Returns: string
+      }
       is_admin: { Args: never; Returns: boolean }
       is_login_id_available: { Args: { p_login_id: string }; Returns: boolean }
       my_rating_rank: {
@@ -562,6 +641,19 @@ export type Database = {
         }[]
       }
       offer_route_path: { Args: { p_offer_id: string }; Returns: Json }
+      purge_old_notifications: { Args: { p_days?: number }; Returns: number }
+      push_notification: {
+        Args: {
+          p_body: string
+          p_kind: Database["public"]["Enums"]["notification_kind"]
+          p_link?: string
+          p_offer_id?: string
+          p_request_id?: string
+          p_title: string
+          p_user_id: string
+        }
+        Returns: undefined
+      }
       rating_leaderboard: {
         Args: { p_limit?: number; p_period?: string }
         Returns: {
@@ -665,6 +757,13 @@ export type Database = {
     }
     Enums: {
       carpool_direction: "commute-in" | "commute-out"
+      notification_kind:
+        | "request_received"
+        | "request_accepted"
+        | "request_rejected"
+        | "request_cancelled"
+        | "offer_cancelled"
+        | "trip_completed"
       offer_status: "open" | "full" | "done" | "cancelled"
       request_status: "pending" | "accepted" | "rejected" | "cancelled" | "done"
     }
@@ -798,6 +897,14 @@ export const Constants = {
   public: {
     Enums: {
       carpool_direction: ["commute-in", "commute-out"],
+      notification_kind: [
+        "request_received",
+        "request_accepted",
+        "request_rejected",
+        "request_cancelled",
+        "offer_cancelled",
+        "trip_completed",
+      ],
       offer_status: ["open", "full", "done", "cancelled"],
       request_status: ["pending", "accepted", "rejected", "cancelled", "done"],
     },

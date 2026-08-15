@@ -97,6 +97,19 @@ if (!URL_ || !ANON) {
   } catch (err) {
     bad('Supabase 에 연결하지 못했습니다', err.message)
   }
+
+  // 알림 테이블 — 로그인하지 않은 요청은 막혀 있어야 정상이다
+  try {
+    const res = await fetch(`${URL_}/rest/v1/notifications?select=id&limit=1`, {
+      headers: { apikey: ANON, Authorization: `Bearer ${ANON}` },
+    })
+    if (res.status === 404) bad('notifications 테이블 없음', 'npm run db:push')
+    else if (res.status === 401 || res.status === 403) ok('알림 테이블 적용됨 · 비로그인 접근 차단됨')
+    else if (res.status === 200) bad('비로그인 상태로 알림이 조회됩니다 ★', 'RLS 를 확인하세요')
+    else caution(`알림 테이블 확인 실패 (HTTP ${res.status})`)
+  } catch (err) {
+    caution('알림 테이블을 확인하지 못했습니다', err.message)
+  }
 }
 
 // ── 3. Edge Function ──────────────────────────────────────────

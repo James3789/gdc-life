@@ -2,6 +2,7 @@ import type { ReactNode } from 'react'
 import { useNavigate } from 'react-router-dom'
 
 import BottomTabBar from './BottomTabBar'
+import NotificationBell from './NotificationBell'
 import { ArrowLeftIcon } from './icons'
 
 type Props = {
@@ -11,6 +12,8 @@ type Props = {
   back?: boolean
   /** 하단 탭바 표시 여부 */
   tabs?: boolean
+  /** 알림 종 표시 여부 (알림 화면 자신만 끈다) */
+  bell?: boolean
   /** 헤더 우측 슬롯 */
   action?: ReactNode
   children: ReactNode
@@ -21,6 +24,7 @@ export default function AppShell({
   subtitle,
   back = false,
   tabs = true,
+  bell = true,
   action,
   children,
 }: Props) {
@@ -44,6 +48,7 @@ export default function AppShell({
             <h1 className="truncate text-[17px] leading-tight font-bold text-slate-900">{title}</h1>
             {subtitle && <p className="truncate text-xs text-slate-500">{subtitle}</p>}
           </div>
+          {bell && <NotificationBell />}
           {action}
         </div>
       </header>

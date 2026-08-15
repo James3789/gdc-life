@@ -82,6 +82,15 @@ export function RouteIcon({ className = base }: Props) {
   )
 }
 
+export function BellIcon({ className = base }: Props) {
+  return (
+    <svg viewBox="0 0 24 24" className={className} {...stroke}>
+      <path d="M6.5 10a5.5 5.5 0 0 1 11 0c0 3.2.7 5 1.5 6h-14c.8-1 1.5-2.8 1.5-6Z" />
+      <path d="M10 19a2 2 0 0 0 4 0" />
+    </svg>
+  )
+}
+
 export function SparkIcon({ className = base }: Props) {
   return (
     <svg viewBox="0 0 24 24" className={className} {...stroke}>
