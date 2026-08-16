@@ -86,16 +86,20 @@ export default function LiveMapOverlay({
           </button>
         </header>
 
-        {/* 지도 — 남는 공간을 모두 쓴다 */}
-        <div className="relative flex-1">
-          <KakaoMap
-            className="h-full w-full"
-            pins={pins}
-            path={path && path.length >= 2 ? path : undefined}
-            fitToken={fitToken}
-            zoomControl
-            rounded={false}
-          />
+        {/* 지도 — 남는 공간을 모두 쓴다.
+            높이를 flex 에만 맡기면 계산 시점에 따라 0 이 될 수 있어,
+            절대 위치로 상자를 확정한 뒤 그 안을 채운다. */}
+        <div className="relative flex-1 overflow-hidden">
+          <div className="absolute inset-0">
+            <KakaoMap
+              className="h-full w-full"
+              pins={pins}
+              path={path && path.length >= 2 ? path : undefined}
+              fitToken={fitToken}
+              zoomControl
+              rounded={false}
+            />
+          </div>
 
           <button
             type="button"

@@ -161,6 +161,18 @@ export default function KakaoMap({
     overlaysRef.current = next
   }, [pins, ready])
 
+  // ── 크기 변화 대응 ──────────────────────────────────────────
+  // 지도는 만들어질 때의 크기를 기억한다. 전체화면으로 열리거나 화면을 돌리면
+  // 다시 계산해 주지 않으면 회색으로 남거나 잘린 채로 그려진다.
+  useEffect(() => {
+    const container = containerRef.current
+    if (!ready || !container || typeof ResizeObserver === 'undefined') return
+
+    const observer = new ResizeObserver(() => mapRef.current?.relayout())
+    observer.observe(container)
+    return () => observer.disconnect()
+  }, [ready])
+
   // 화면을 벗어날 때 정리 (overlaysRef 는 갱신될 때마다 교체되므로 여기서 읽는다)
   useEffect(
     () => () => {
