@@ -64,6 +64,19 @@ export function validateEmail(v: string, allowedDomains: string[] = []): string 
   return null
 }
 
+/** 차량번호.
+ *  형식이 시기·용도마다 달라(12가3456 / 서울12가3456 / 임시번호판)
+ *  숫자와 한글이 하나씩은 있는지만 본다. DB 의 check 제약과 같은 규칙이다.
+ */
+export const validateVehicleNo: Validator = (v) => {
+  const value = v.trim().replace(/\s+/g, ' ')
+  if (!value) return '차량번호를 입력해 주세요.'
+  if (value.length < 5 || value.length > 20) return '차량번호를 정확히 입력해 주세요.'
+  if (!/[0-9]/.test(value) || !/[가-힣]/.test(value))
+    return '숫자와 한글이 포함된 차량번호를 입력해 주세요. (예: 12가3456)'
+  return null
+}
+
 /** 입력 중 자동으로 하이픈을 넣는다. 010-1234-5678 */
 export function formatPhone(input: string): string {
   const d = input.replace(/\D/g, '').slice(0, 11)

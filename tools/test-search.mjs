@@ -12,7 +12,10 @@ import { createClient } from '@supabase/supabase-js'
 
 const ROOT = dirname(dirname(fileURLToPath(import.meta.url)))
 
+/** 환경변수가 있으면 그쪽이 우선 — .env 가 클라우드를 가리킬 때
+ *  로컬 스택으로 돌리기 위한 탈출구다. */
 function env(key) {
+  if (process.env[key]) return process.env[key]
   for (const line of readFileSync(join(ROOT, '.env'), 'utf8').split('\n')) {
     const m = line.match(/^\s*([A-Z_]+)\s*=\s*(.*?)\s*$/)
     if (m && m[1] === key) return m[2].replace(/^["']|["']$/g, '')

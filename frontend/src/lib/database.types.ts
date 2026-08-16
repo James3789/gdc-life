@@ -381,6 +381,32 @@ export type Database = {
           },
         ]
       }
+      offer_vehicles: {
+        Row: {
+          created_at: string
+          offer_id: string
+          vehicle_no: string
+        }
+        Insert: {
+          created_at?: string
+          offer_id: string
+          vehicle_no: string
+        }
+        Update: {
+          created_at?: string
+          offer_id?: string
+          vehicle_no?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "offer_vehicles_offer_id_fkey"
+            columns: ["offer_id"]
+            isOneToOne: true
+            referencedRelation: "carpool_offers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profile_private: {
         Row: {
           email: string
@@ -583,6 +609,7 @@ export type Database = {
           p_route_distance_m?: number
           p_route_duration_s?: number
           p_seats_total?: number
+          p_vehicle_no?: string
           p_waypoints?: Json
         }
         Returns: {
@@ -622,6 +649,7 @@ export type Database = {
       }
       is_admin: { Args: never; Returns: boolean }
       is_login_id_available: { Args: { p_login_id: string }; Returns: boolean }
+      my_last_vehicle_no: { Args: never; Returns: string }
       my_rating_rank: {
         Args: { p_period?: string }
         Returns: {

@@ -46,9 +46,24 @@ Cloudflare Pages ──── 정적 파일 (frontend/dist)
 
 | 항목 | 값 | 이유 |
 |---|---|---|
-| **Confirm email** | **끄기** | 사내 ID 로그인은 `@gdc-life.local` 합성 주소를 쓴다. 켜져 있으면 확인 메일이 도달하지 않아 **가입 후 아무도 로그인하지 못한다.** |
+| **Confirm email** | **끄기** | 사내 ID 로그인은 `@gdc-life.local` 합성 주소를 쓴다. 켜져 있으면 **가입 자체가 거부된다** — 아래 참고. |
 | Minimum password length | `8` | 프론트 검증과 일치 |
 | Password requirements | `Letters and digits` | 프론트 검증과 일치 |
+
+> **`Email address "hong12@gdc-life.local" is invalid` 로 가입이 막힌다면 이것이다.**
+> 확인 메일이 켜져 있으면 Supabase 가 메일을 보내려 하고, `.local` 은 실재할 수 없는
+> 예약 도메인이라 발송 직전에 주소가 거부된다.
+> 검증은 **계정을 실제로 만들려는 순간에만** 돌기 때문에, 다른 이유로 먼저 실패하는
+> 요청에서는 이 오류가 보이지 않아 원인을 찾기 어렵다.
+>
+> 지금 상태를 확인하는 법 — `mailer_autoconfirm` 이 **`true`** 여야 정상이다:
+>
+> ```bash
+> curl -s "https://<ref>.supabase.co/auth/v1/settings" -H "apikey: <anon 키>"
+> ```
+>
+> 로컬 스택은 `supabase/config.toml` 의 `enable_confirmations = false` 라 이 문제가 없다.
+> **클라우드에서만 나타난다.**
 
 **Authentication → URL Configuration**
 - Site URL: 배포 주소 (예: `https://gdc-life.pages.dev`)

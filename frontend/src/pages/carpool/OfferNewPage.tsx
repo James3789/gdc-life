@@ -17,7 +17,8 @@ import {
 import { DIRECTIONS, type Direction, isDirection } from '../../lib/direction'
 import { fetchRoute, type Route } from '../../lib/directions'
 import { formatDistance, formatDuration, type LatLng, type Place } from '../../lib/geo'
-import { createOffers } from '../../lib/offers'
+import { createOffers, getMyLastVehicleNo } from '../../lib/offers'
+import { validateVehicleNo } from '../../lib/validation'
 
 type PickerTarget = { kind: 'endpoint' } | { kind: 'waypoint'; index: number } | null
 
@@ -34,6 +35,19 @@ export default function OfferNewPage() {
   const [rideDate, setRideDate] = useState(todayISO())
   const [departTime, setDepartTime] = useState('07:30')
   const [seats, setSeats] = useState(3)
+  const [vehicleNo, setVehicleNo] = useState('')
+  const [vehicleTouched, setVehicleTouched] = useState(false)
+
+  // 매번 같은 차를 쓰는 경우가 대부분이라 지난번 번호를 채워 준다
+  useEffect(() => {
+    let alive = true
+    getMyLastVehicleNo().then((last) => {
+      if (alive && last) setVehicleNo(last)
+    })
+    return () => {
+      alive = false
+    }
+  }, [])
 
   /** 봉사자가 직접 지정하는 지점 (출근=출발지, 퇴근=목적지) */
   const [endpoint, setEndpoint] = useState<Place | null>(null)
@@ -112,10 +126,17 @@ export default function OfferNewPage() {
     setPicker(null)
   }
 
+  const vehicleError = validateVehicleNo(vehicleNo)
+
   async function handleSubmit() {
     setError(null)
     if (!origin || !dest) {
       setError(`${meta.driverInputLabel}를 지정해 주세요.`)
+      return
+    }
+    if (vehicleError) {
+      setVehicleTouched(true)
+      setError(vehicleError)
       return
     }
     if (dates.length === 0) {
@@ -136,6 +157,7 @@ export default function OfferNewPage() {
         routeDistanceM: route?.distanceM ?? null,
         routeDurationS: route?.durationS ?? null,
         seatsTotal: seats,
+        vehicleNo: vehicleNo.trim().replace(/\s+/g, ' '),
       })
       navigate('/carpool/calendar', { replace: true })
     } catch (err) {
@@ -270,6 +292,35 @@ export default function OfferNewPage() {
               </button>
             ))}
           </div>
+        </section>
+
+        {/* 차량번호 */}
+        <section>
+          <SectionLabel>차량번호</SectionLabel>
+          <input
+            value={vehicleNo}
+            onChange={(e) => setVehicleNo(e.target.value)}
+            onBlur={() => setVehicleTouched(true)}
+            placeholder="12가3456"
+            inputMode="text"
+            autoCapitalize="none"
+            spellCheck={false}
+            aria-invalid={Boolean(vehicleTouched && vehicleError)}
+            className={`min-h-[48px] w-full rounded-xl border bg-white px-3.5 focus:ring-2 focus:outline-none ${
+              vehicleTouched && vehicleError
+                ? 'border-rose-400 focus:border-rose-400 focus:ring-rose-100'
+                : 'border-slate-300 focus:border-brand-500 focus:ring-brand-100'
+            }`}
+          />
+          <p
+            className={`mt-1.5 px-0.5 text-[12px] leading-relaxed ${
+              vehicleTouched && vehicleError ? 'text-rose-600' : 'text-slate-500'
+            }`}
+          >
+            {vehicleTouched && vehicleError
+              ? vehicleError
+              : '탑승자가 차를 알아볼 수 있게 필요합니다. 매칭된 탑승자에게만 보입니다.'}
+          </p>
         </section>
 
         {/* 반복 */}

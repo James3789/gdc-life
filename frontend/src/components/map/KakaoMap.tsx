@@ -13,13 +13,15 @@ import { useEffect, useRef, useState } from 'react'
 import type { LatLng } from '../../lib/geo'
 import { loadKakaoMaps } from '../../lib/kakao'
 
-export type PinKind = 'origin' | 'dest' | 'company' | 'waypoint' | 'me' | 'partner'
+export type PinKind = 'origin' | 'dest' | 'company' | 'waypoint' | 'me' | 'partner' | 'car'
 
 export type Pin = {
   id: string
   position: LatLng
   kind: PinKind
   label?: string
+  /** kind='car' 일 때 말풍선에 함께 찍는 차량번호 */
+  vehicleNo?: string
 }
 
 const PIN_STYLE: Record<PinKind, { bg: string; text: string }> = {
@@ -29,14 +31,47 @@ const PIN_STYLE: Record<PinKind, { bg: string; text: string }> = {
   waypoint: { bg: 'bg-amber-500', text: '경유' },
   me: { bg: 'bg-brand-500', text: '나' },
   partner: { bg: 'bg-violet-500', text: '상대' },
+  car: { bg: 'bg-violet-600', text: '차량' },
+}
+
+/** 지도 위 차량 아이콘 — components/icons.tsx 의 CarIcon 과 같은 모양 */
+const CAR_SVG = `<svg viewBox="0 0 24 24" class="h-4 w-4 shrink-0" fill="none" stroke="currentColor"
+  stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+  <path d="M4.5 16.5h15" />
+  <path d="M5 16.5v2h2.5v-2M16.5 16.5v2H19v-2" />
+  <path d="M4.5 16.5v-4l1.8-4.3A2 2 0 0 1 8.1 7h7.8a2 2 0 0 1 1.8 1.2l1.8 4.3v4" />
+  <path d="M5 12.5h14" />
+  <circle cx="8" cy="14.5" r=".9" fill="currentColor" stroke="none" />
+  <circle cx="16" cy="14.5" r=".9" fill="currentColor" stroke="none" />
+</svg>`
+
+/** 사용자 입력이 HTML 로 들어가므로 반드시 이스케이프한다 */
+function escapeHtml(value: string): string {
+  return value.replace(
+    /[&<>"']/g,
+    (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c] ?? c,
+  )
 }
 
 function pinHtml(pin: Pin): string {
   const style = PIN_STYLE[pin.kind]
-  const label = pin.label ?? style.text
+  const label = escapeHtml(pin.label ?? style.text)
+
+  // 차량은 그림과 번호를 함께 보여 준다 — 길에서 차를 찾을 때 쓰는 정보다
+  const body =
+    pin.kind === 'car'
+      ? `<span class="flex items-center gap-1.5">
+           ${CAR_SVG}
+           <span class="flex flex-col items-start leading-tight">
+             ${pin.vehicleNo ? `<span class="text-[12px] font-extrabold tracking-wide tabular-nums">${escapeHtml(pin.vehicleNo)}</span>` : ''}
+             <span class="text-[10px] font-semibold opacity-90">${label}</span>
+           </span>
+         </span>`
+      : label
+
   // Tailwind 클래스는 이 파일에서 스캔되므로 그대로 적용된다
   return `<div class="flex flex-col items-center pointer-events-none">
-    <div class="${style.bg} rounded-full px-2 py-1 text-[11px] font-bold whitespace-nowrap text-white shadow-md">${label}</div>
+    <div class="${style.bg} rounded-full px-2 py-1 text-[11px] font-bold whitespace-nowrap text-white shadow-md">${body}</div>
     <div class="${style.bg} -mt-[3px] h-2.5 w-2.5 rotate-45 shadow-md"></div>
   </div>`
 }

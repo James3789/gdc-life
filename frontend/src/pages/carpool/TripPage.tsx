@@ -11,7 +11,7 @@ import { completeOffer } from '../../lib/ratings'
 import { DIRECTIONS } from '../../lib/direction'
 import { formatDistance, formatDuration, type LatLng } from '../../lib/geo'
 import { canShareLocation, useLiveLocation } from '../../lib/liveLocation'
-import { getOffer, getOfferRoute, type Offer } from '../../lib/offers'
+import { getOffer, getOfferRoute, getVehicleNo, type Offer } from '../../lib/offers'
 import {
   listMatchedContacts,
   listMyRequests,
@@ -50,6 +50,8 @@ export default function TripPage() {
   const [routePath, setRoutePath] = useState<LatLng[]>([])
   const [riders, setRiders] = useState<CarpoolRequest[]>([])
   const [contacts, setContacts] = useState<MatchedContact[]>([])
+  /** 매칭된 사이에서만 읽힌다 — 권한이 없으면 null */
+  const [vehicleNo, setVehicleNo] = useState<string | null>(null)
   const [allowed, setAllowed] = useState<boolean | null>(null)
   const [loading, setLoading] = useState(true)
   const [loadError, setLoadError] = useState<string | null>(null)
@@ -63,18 +65,20 @@ export default function TripPage() {
     setLoading(true)
     setLoadError(null)
     try {
-      const [o, path, received, mine, cs, can] = await Promise.all([
+      const [o, path, received, mine, cs, can, vehicle] = await Promise.all([
         getOffer(offerId),
         getOfferRoute(offerId),
         listReceivedRequests(),
         listMyRequests(),
         listMatchedContacts(),
         canShareLocation(offerId),
+        getVehicleNo(offerId),
       ])
       setOffer(o)
       setRoutePath(path)
       setContacts(cs.filter((c) => c.offerId === offerId))
       setAllowed(can)
+      setVehicleNo(vehicle)
 
       // 봉사자면 허락한 탑승자들, 탑승자면 내 신청
       const isDriver = o?.driverId === me?.id
@@ -146,9 +150,32 @@ export default function TripPage() {
       label: isDriver ? `${r.counterpart?.name ?? '탑승자'} 탑승` : '내 탑승 위치',
     })),
   ]
-  if (live.myPosition) pins.push({ id: 'me', position: live.myPosition, kind: 'me', label: '내 위치' })
+  // 봉사자의 위치는 차량 그림과 차량번호로 표시한다 — 길에서 차를 찾는 데 쓰는 정보다
+  if (live.myPosition) {
+    pins.push(
+      isDriver
+        ? {
+            id: 'me',
+            position: live.myPosition,
+            kind: 'car',
+            label: '내 차',
+            vehicleNo: vehicleNo ?? undefined,
+          }
+        : { id: 'me', position: live.myPosition, kind: 'me', label: '내 위치' },
+    )
+  }
   live.peers.forEach((p) =>
-    pins.push({ id: `p-${p.userId}`, position: p, kind: 'partner', label: p.name }),
+    pins.push(
+      p.userId === offer.driverId
+        ? {
+            id: `p-${p.userId}`,
+            position: p,
+            kind: 'car',
+            label: p.name,
+            vehicleNo: vehicleNo ?? undefined,
+          }
+        : { id: `p-${p.userId}`, position: p, kind: 'partner', label: p.name },
+    ),
   )
 
   return (
@@ -169,6 +196,15 @@ export default function TripPage() {
             {offer.routeDistanceM !== null && <span>{formatDistance(offer.routeDistanceM)}</span>}
             {offer.routeDurationS !== null && <span>{formatDuration(offer.routeDurationS)}</span>}
           </div>
+
+          {vehicleNo && (
+            <p className="mt-2.5 inline-flex items-center gap-1.5 rounded-lg bg-violet-50 px-2.5 py-1.5 text-[13px] font-bold text-violet-700">
+              🚗 {vehicleNo}
+              <span className="text-[11px] font-medium text-violet-500">
+                {isDriver ? '내 차량' : '이 차를 찾으세요'}
+              </span>
+            </p>
+          )}
         </section>
 
         {/* 지도 — 자세히 보려면 전체화면으로 */}

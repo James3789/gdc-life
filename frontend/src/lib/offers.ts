@@ -91,6 +91,7 @@ export type CreateOfferInput = {
   routeDistanceM: number | null
   routeDurationS: number | null
   seatsTotal: number
+  vehicleNo: string
 }
 
 /** 단건·반복 등록을 한 번의 RPC 로 처리한다 (경로 LineString 생성 포함). */
@@ -107,10 +108,31 @@ export async function createOffers(input: CreateOfferInput): Promise<Offer[]> {
     p_route_distance_m: input.routeDistanceM ?? undefined,
     p_route_duration_s: input.routeDurationS ?? undefined,
     p_seats_total: input.seatsTotal,
+    p_vehicle_no: input.vehicleNo,
   })
 
   if (error) throw new Error(error.message)
   return (data as unknown as Row[]).map(toOffer)
+}
+
+/** 차량번호. 봉사자 본인과 매칭된 탑승자만 읽을 수 있다(RLS).
+ *  권한이 없으면 오류가 아니라 빈 결과가 오므로 null 로 돌려준다. */
+export async function getVehicleNo(offerId: string): Promise<string | null> {
+  const { data, error } = await supabase
+    .from('offer_vehicles')
+    .select('vehicle_no')
+    .eq('offer_id', offerId)
+    .maybeSingle()
+
+  if (error) return null
+  return (data as { vehicle_no: string } | null)?.vehicle_no ?? null
+}
+
+/** 지난번에 등록한 차량번호 — 등록 화면 기본값 */
+export async function getMyLastVehicleNo(): Promise<string> {
+  const { data, error } = await supabase.rpc('my_last_vehicle_no')
+  if (error) return ''
+  return (data as unknown as string | null) ?? ''
 }
 
 /** 내가 등록한 카풀 (달력용). */
