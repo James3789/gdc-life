@@ -54,6 +54,24 @@ declare global {
       setDraggable(draggable: boolean): void
       setZoomable(zoomable: boolean): void
       relayout(): void
+      panTo(latlng: LatLng): void
+      addControl(control: object, position: number): void
+    }
+
+    /** 기본 확대/축소 버튼 */
+    class ZoomControl {
+      constructor()
+    }
+
+    const ControlPosition: {
+      readonly TOP: number
+      readonly TOPLEFT: number
+      readonly TOPRIGHT: number
+      readonly LEFT: number
+      readonly RIGHT: number
+      readonly BOTTOM: number
+      readonly BOTTOMLEFT: number
+      readonly BOTTOMRIGHT: number
     }
 
     interface MarkerOptions {
@@ -99,6 +117,7 @@ declare global {
       constructor(options: CustomOverlayOptions)
       setMap(map: Map | null): void
       setPosition(latlng: LatLng): void
+      setContent(content: HTMLElement | string): void
     }
 
     interface MouseEvent {

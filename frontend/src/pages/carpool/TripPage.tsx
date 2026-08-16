@@ -1,8 +1,9 @@
-import { useCallback, useEffect, useState } from 'react'
-import { useParams } from 'react-router-dom'
+import { useCallback, useEffect, useRef, useState } from 'react'
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 
 import AppShell from '../../components/AppShell'
 import KakaoMap, { type Pin } from '../../components/map/KakaoMap'
+import LiveMapOverlay from '../../components/map/LiveMapOverlay'
 import { Alert, Button } from '../../components/ui'
 import { useAuth } from '../../lib/auth'
 import { formatDateKo, formatTimeKo, hasDeparted } from '../../lib/dates'
@@ -22,6 +23,28 @@ import {
 export default function TripPage() {
   const { id: offerId } = useParams<{ id: string }>()
   const { me } = useAuth()
+  const navigate = useNavigate()
+
+  // 전체화면 지도는 주소(?map=1)로 열고 닫는다.
+  // 같은 라우트라 화면이 다시 만들어지지 않아 위치 공유가 끊기지 않고,
+  // 안드로이드 뒤로가기로도 닫힌다.
+  const [params, setParams] = useSearchParams()
+  const mapOpen = params.get('map') === '1'
+  const openedByUsRef = useRef(false)
+
+  const openMap = () => {
+    openedByUsRef.current = true
+    setParams({ map: '1' })
+  }
+
+  const closeMap = () => {
+    if (openedByUsRef.current) {
+      openedByUsRef.current = false
+      navigate(-1) // 우리가 밀어 넣은 기록을 되돌린다
+    } else {
+      setParams({}, { replace: true }) // 링크로 바로 열린 경우
+    }
+  }
 
   const [offer, setOffer] = useState<Offer | null>(null)
   const [routePath, setRoutePath] = useState<LatLng[]>([])
@@ -148,8 +171,21 @@ export default function TripPage() {
           </div>
         </section>
 
-        {/* 지도 */}
-        <KakaoMap className="h-72 w-full" pins={pins} path={routePath.length >= 2 ? routePath : undefined} />
+        {/* 지도 — 자세히 보려면 전체화면으로 */}
+        <div className="relative">
+          <KakaoMap
+            className="h-72 w-full"
+            pins={pins}
+            path={routePath.length >= 2 ? routePath : undefined}
+          />
+          <button
+            type="button"
+            onClick={openMap}
+            className="absolute top-3 right-3 z-10 rounded-lg border border-slate-200 bg-white/95 px-3 py-2 text-[13px] font-semibold text-slate-700 shadow-sm backdrop-blur active:bg-slate-100"
+          >
+            ⤢ 크게 보기
+          </button>
+        </div>
 
         {/* 위치 공유 */}
         <section className="rounded-2xl border border-slate-200 bg-white p-4">
@@ -284,6 +320,23 @@ export default function TripPage() {
           )}
         </section>
       </div>
+
+      {mapOpen && (
+        <LiveMapOverlay
+          title="실시간 위치"
+          subtitle={`${formatDateKo(offer.rideDate)} · ${meta.label} · ${formatTimeKo(offer.departTime)}`}
+          pins={pins}
+          path={routePath}
+          started={live.state !== 'idle'}
+          stateLabel={STATE_LABEL[live.state]}
+          peerCount={live.peers.length}
+          canShare={allowed !== false}
+          contacts={contacts.map((c) => ({ userId: c.userId, name: c.name, phone: c.phone }))}
+          onStart={live.start}
+          onStop={live.stop}
+          onClose={closeMap}
+        />
+      )}
     </AppShell>
   )
 }
